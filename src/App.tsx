@@ -49,6 +49,7 @@ const AppContent: React.FC = () => {
         currentView={currentView}
         selectedConfigId={selectedConfigId}
         configs={configs}
+        systemSettings={systemSettings}
         onSelect={handleSelectConfig}
         onAdd={handleAddConfig}
         onImport={handleImportConfig}

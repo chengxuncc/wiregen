@@ -32,33 +32,32 @@ export const useNavigation = () => {
   const [currentView, setCurrentView] = useState<View>(View.LIST);
   const [selectedConfigId, setSelectedConfigId] = useState<string | undefined>(undefined);
 
+  // Parse URL to extract view and config ID
+  const parseUrl = (pathname: string): { view: View; configId?: string } => {
+    // Handle /config/:id pattern
+    if (pathname.startsWith('/config/')) {
+      const configId = pathname.substring(8); // Remove '/config/' prefix
+      return { view: View.DETAIL, configId };
+    }
+    
+    // Handle other paths
+    const view = PATH_VIEWS[pathname] || View.LIST;
+    return { view, configId: undefined };
+  };
+
   // Initialize view from current URL
   useEffect(() => {
-    const currentPath = window.location.pathname;
-    const view = PATH_VIEWS[currentPath] || View.LIST;
+    const { view, configId } = parseUrl(window.location.pathname);
     setCurrentView(view);
-    
-    // Extract config ID from URL if present
-    const pathParts = currentPath.split('/');
-    if (pathParts.length > 2) {
-      setSelectedConfigId(pathParts[2]);
-    }
+    setSelectedConfigId(configId);
   }, []);
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
-      const currentPath = window.location.pathname;
-      const view = PATH_VIEWS[currentPath] || View.LIST;
+      const { view, configId } = parseUrl(window.location.pathname);
       setCurrentView(view);
-      
-      // Extract config ID from URL if present
-      const pathParts = currentPath.split('/');
-      if (pathParts.length > 2) {
-        setSelectedConfigId(pathParts[2]);
-      } else {
-        setSelectedConfigId(undefined);
-      }
+      setSelectedConfigId(configId);
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -67,8 +66,14 @@ export const useNavigation = () => {
 
   // Update URL when view changes
   const navigateToView = (view: View, configId?: string) => {
-    const path = VIEW_PATHS[view];
-    const url = configId ? `${path}/${configId}` : path;
+    const basePath = VIEW_PATHS[view];
+    let url: string;
+    
+    if (view === View.DETAIL && configId) {
+      url = `/config/${configId}`;
+    } else {
+      url = basePath;
+    }
     
     if (window.location.pathname !== url) {
       window.history.pushState({ view, configId }, '', url);

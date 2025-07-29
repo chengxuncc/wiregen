@@ -12,6 +12,7 @@ interface ViewRendererProps {
   currentView: View;
   selectedConfigId?: string;
   configs: WireGuardConfig[];
+  systemSettings: any;
   onSelect: (config: WireGuardConfig) => void;
   onAdd: () => void;
   onImport: () => void;
@@ -29,6 +30,7 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
   currentView,
   selectedConfigId,
   configs,
+  systemSettings,
   onSelect,
   onAdd,
   onImport,
@@ -72,9 +74,9 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
       return (
         <ConfigDetail
           config={selectedConfig}
-          onEdit={() => onEdit(selectedConfig.id)}
+          systemSettings={systemSettings}
+          onSave={onSave}
           onDelete={() => onDelete(selectedConfig.id)}
-          onExport={() => onExport(selectedConfig)}
           onBack={onBack}
         />
       );
