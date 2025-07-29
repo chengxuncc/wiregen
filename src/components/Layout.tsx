@@ -4,11 +4,11 @@ interface LayoutProps {
   children: ReactNode;
   onSettings?: () => void;
   onBackup?: () => void;
-  onRecover?: () => void;
+  onRestore?: () => void;
   showHeaderButtons?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onRecover, showHeaderButtons = true }) => {
+const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onRestore, showHeaderButtons = true }) => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-white shadow">
@@ -17,9 +17,9 @@ const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onRecov
             <h1 className="text-2xl font-bold text-gray-900">WireGuard Config Manager</h1>
             {showHeaderButtons && (
               <div className="flex space-x-3">
-                {onRecover && (
+                {onRestore && (
                   <button
-                    onClick={onRecover}
+                    onClick={onRestore}
                     className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     title="Restore from Backup"
                   >
