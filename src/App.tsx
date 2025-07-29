@@ -30,6 +30,10 @@ const AppContent: React.FC = () => {
     navigateToView(View.LIST);
   };
 
+  const handleHome = () => {
+    navigateToView(View.LIST);
+  };
+
   const handleCancel = () => {
     if (selectedConfigId) {
       navigateToView(View.DETAIL, selectedConfigId);
@@ -43,6 +47,7 @@ const AppContent: React.FC = () => {
       onSettings={handleSystemSettings}
       onBackup={handleBackup}
       onRestore={handleRestore}
+      onHome={handleHome}
       showHeaderButtons={currentView === View.LIST}
     >
       <ViewRenderer

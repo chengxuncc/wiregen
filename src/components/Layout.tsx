@@ -5,16 +5,23 @@ interface LayoutProps {
   onSettings?: () => void;
   onBackup?: () => void;
   onRestore?: () => void;
+  onHome?: () => void;
   showHeaderButtons?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onRestore, showHeaderButtons = true }) => {
+const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onRestore, onHome, showHeaderButtons = true }) => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">WireGuard Config Manager</h1>
+            <h1 
+              className={`text-2xl font-bold text-gray-900 ${onHome ? 'cursor-pointer hover:text-indigo-600 transition-colors duration-200' : ''}`}
+              onClick={onHome}
+              title={onHome ? 'Return to main view' : undefined}
+            >
+              WireGen
+            </h1>
             {showHeaderButtons && (
               <div className="flex space-x-3">
                 {onRestore && (
@@ -66,7 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onResto
       </main>
       <footer className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-          WireGuard Config Manager &copy; {new Date().getFullYear()}
+          WireGen &copy; {new Date().getFullYear()}
         </div>
       </footer>
     </div>

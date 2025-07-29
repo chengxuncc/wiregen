@@ -37,6 +37,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ config, onSave, onCancel }) => 
       setPeers(config.peers);
     } else {
       // Initialize with no peers
+      setName("new");
       setPeers([]);
     }
   }, [config]);
@@ -160,7 +161,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ config, onSave, onCancel }) => 
         
         <div className="mt-6">
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Configuration Name
+            Name
           </label>
           <input
             type="text"
