@@ -8,9 +8,10 @@ interface ConfigListProps {
   onAdd: () => void;
   onImport: () => void;
   onExport: (config: WireGuardConfig) => void;
+  onEdit?: (configId: string) => void;
 }
 
-const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onAdd, onImport, onExport}) => {
+const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onAdd, onImport, onExport, onEdit}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'updatedAt' | 'peers'>('updatedAt');
 
@@ -180,7 +181,20 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{config.name}</p>
+                          {onEdit ? (
+                            <p 
+                              className="text-sm font-medium text-gray-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(config.id);
+                              }}
+                              title="Click to edit configuration"
+                            >
+                              {config.name}
+                            </p>
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900 truncate">{config.name}</p>
+                          )}
                           <div className="flex items-center space-x-4 mt-1">
                             <p className="text-sm text-gray-500">
                               {config.interface.address.join(', ')}

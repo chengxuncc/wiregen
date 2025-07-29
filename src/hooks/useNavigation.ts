@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 export enum View {
   LIST = 'LIST',
   DETAIL = 'DETAIL',
-  FORM = 'FORM',
   IMPORT = 'IMPORT',
   IMPORT_BACKUP = 'IMPORT_BACKUP',
   SETTINGS = 'SETTINGS'
@@ -13,7 +12,6 @@ export enum View {
 const VIEW_PATHS: Record<View, string> = {
   [View.LIST]: '/',
   [View.DETAIL]: '/config',
-  [View.FORM]: '/edit',
   [View.IMPORT]: '/import',
   [View.IMPORT_BACKUP]: '/import-backup',
   [View.SETTINGS]: '/settings'
@@ -22,7 +20,6 @@ const VIEW_PATHS: Record<View, string> = {
 const PATH_VIEWS: Record<string, View> = {
   '/': View.LIST,
   '/config': View.DETAIL,
-  '/edit': View.FORM,
   '/import': View.IMPORT,
   '/import-backup': View.IMPORT_BACKUP,
   '/settings': View.SETTINGS
@@ -74,7 +71,7 @@ export const useNavigation = () => {
     } else {
       url = basePath;
     }
-    
+
     if (window.location.pathname !== url) {
       window.history.pushState({ view, configId }, '', url);
     }

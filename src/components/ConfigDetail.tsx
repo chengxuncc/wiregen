@@ -1,13 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {WireGuardConfig} from '../types/WireGuardConfig';
 import {SystemSettings} from '../types/SystemSettings';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ConfigDetailProps {
-  config: WireGuardConfig;
+  config?: WireGuardConfig;
   systemSettings: SystemSettings;
   onSave: (config: WireGuardConfig) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onBack: () => void;
+  onCancel?: () => void;
 }
 
 const EditableField = ({label, value, onChange, type = 'text', placeholder = '', className = ''}: {
@@ -73,15 +75,32 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
   </div>
 );
 
-const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSave, onDelete, onBack,}) => {
-  const [editedConfig, setEditedConfig] = useState<WireGuardConfig>(config);
+const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSave, onDelete, onBack, onCancel}) => {
+  // Create empty config for new configurations
+  const createEmptyConfig = (): WireGuardConfig => ({
+    id: uuidv4(),
+    name: 'New Configuration',
+    interface: {
+      privateKey: '',
+      address: [''],
+      listenPort: undefined,
+      dns: [''],
+    },
+    peers: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  const [editedConfig, setEditedConfig] = useState<WireGuardConfig>(config || createEmptyConfig());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
+  const isNewConfig = !config;
 
   // Update edited config when prop changes
   useEffect(() => {
-    setEditedConfig(config);
+    if (config) {
+      setEditedConfig(config);
+    }
   }, [config]);
 
   const handleSave = () => {
@@ -103,8 +122,18 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSa
   };
 
   const handleDeleteConfirm = () => {
-    onDelete();
+    if (onDelete) {
+      onDelete();
+    }
     setShowDeleteConfirm(false);
+  };
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      onBack();
+    }
   };
 
   const updateConfig = (updates: Partial<WireGuardConfig>) => {
@@ -230,25 +259,27 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSa
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={onBack}
+                onClick={handleCancel}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                Back
+                {isNewConfig ? 'Cancel' : 'Back'}
               </button>
-              {showDeleteConfirm ? (
-                <button
-                  onClick={handleDeleteConfirm}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  Confirm
-                </button>
-              ) : (
-                <button
-                  onClick={handleDeleteClick}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  Delete
-                </button>
+              {!isNewConfig && onDelete && (
+                showDeleteConfirm ? (
+                  <button
+                    onClick={handleDeleteConfirm}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Confirm Delete
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleDeleteClick}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Delete
+                  </button>
+                )
               )}
               <button
                 onClick={handleSave}
@@ -262,7 +293,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSa
                 {isSaving ? (
                   'Saved'
                 ) : (
-                  'Save'
+                  isNewConfig ? 'Create' : 'Save'
                 )}
               </button>
             </div>

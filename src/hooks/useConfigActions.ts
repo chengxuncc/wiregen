@@ -48,7 +48,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
   // Handle adding a new config
   const handleAddConfig = () => {
-    navigateToView(View.FORM);
+    navigateToView(View.DETAIL);
   };
 
   // Handle importing a config
@@ -82,7 +82,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
   // Handle editing a config
   const handleEditConfig = (configId: string) => {
-    navigateToView(View.FORM, configId);
+    navigateToView(View.DETAIL, configId);
   };
 
   // Handle deleting a config

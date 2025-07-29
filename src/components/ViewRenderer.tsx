@@ -3,7 +3,6 @@ import { View } from '../hooks/useNavigation';
 import { WireGuardConfig } from '../types/WireGuardConfig';
 import ConfigList from './ConfigList';
 import ConfigDetail from './ConfigDetail';
-import ConfigForm from './ConfigForm';
 import ImportConfig from './ImportConfig';
 import ImportBackup from './ImportBackup';
 import SystemSettings from './SystemSettings';
@@ -54,38 +53,18 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
           onAdd={onAdd}
           onImport={onImport}
           onExport={onExport}
+          onEdit={onEdit}
         />
       );
 
     case View.DETAIL:
-      if (!selectedConfig) {
-        return (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Configuration not found</p>
-            <button
-              onClick={onBack}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              Back to List
-            </button>
-          </div>
-        );
-      }
       return (
         <ConfigDetail
           config={selectedConfig}
           systemSettings={systemSettings}
           onSave={onSave}
-          onDelete={() => onDelete(selectedConfig.id)}
+          onDelete={selectedConfig ? () => onDelete(selectedConfig.id) : undefined}
           onBack={onBack}
-        />
-      );
-
-    case View.FORM:
-      return (
-        <ConfigForm
-          config={selectedConfig}
-          onSave={onSave}
           onCancel={onCancel}
         />
       );

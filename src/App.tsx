@@ -35,11 +35,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleCancel = () => {
-    if (selectedConfigId) {
-      navigateToView(View.DETAIL, selectedConfigId);
-    } else {
-      navigateToView(View.LIST);
-    }
+    navigateToView(View.LIST);
   };
 
   return (
