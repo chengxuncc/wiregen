@@ -54,82 +54,80 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
   };
 
   return (
-    <div className="space-y-6">
-      {/* Search and controls in one row */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            {/* Search bar */}
-            <div className="flex-1">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search configurations by name or IP address..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
+    <div className="bg-white shadow rounded-lg">
+      {/* Search and controls section */}
+      <div className="px-6 py-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row gap-4 items-end">
+          {/* Search bar */}
+          <div className="flex-1">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
               </div>
+              <input
+                type="text"
+                placeholder="Search configurations by name or IP address..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
             </div>
+          </div>
 
-            {/* Sort dropdown */}
-            <div className="flex-shrink-0">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'name' | 'updatedAt' | 'peers')}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              >
-                <option value="updatedAt">Sort by: Recently Updated</option>
-                <option value="name">Sort by: Name</option>
-                <option value="peers">Sort by: Number of Peers</option>
-              </select>
-            </div>
+          {/* Sort dropdown */}
+          <div className="flex-shrink-0">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'name' | 'updatedAt' | 'peers')}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
+              <option value="updatedAt">Sort by: Recently Updated</option>
+              <option value="name">Sort by: Name</option>
+              <option value="peers">Sort by: Number of Peers</option>
+            </select>
+          </div>
 
-            {/* Action buttons */}
-            <div className="flex gap-2">
-              <button
-                onClick={onImport}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                     className="lucide lucide-file-cog flex-shrink-0 h-4 w-4 mr-2">
-                  <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                  <path d="m3.2 12.9-.9-.4"></path>
-                  <path d="m3.2 15.1-.9.4"></path>
-                  <path d="M4.677 21.5a2 2 0 0 0 1.313.5H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v2.5"></path>
-                  <path d="m4.9 11.2-.4-.9"></path>
-                  <path d="m4.9 16.8-.4.9"></path>
-                  <path d="m7.5 10.3-.4.9"></path>
-                  <path d="m7.5 17.7-.4-.9"></path>
-                  <path d="m9.7 12.5-.9.4"></path>
-                  <path d="m9.7 15.5-.9-.4"></path>
-                  <circle cx="6" cy="14" r="3"></circle>
-                </svg>
-                Import
-              </button>
-              <button
-                onClick={onAdd}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Add New
-              </button>
-            </div>
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={onImport}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   className="lucide lucide-file-cog flex-shrink-0 h-4 w-4 mr-2">
+                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                <path d="m3.2 12.9-.9-.4"></path>
+                <path d="m3.2 15.1-.9.4"></path>
+                <path d="M4.677 21.5a2 2 0 0 0 1.313.5H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v2.5"></path>
+                <path d="m4.9 11.2-.4-.9"></path>
+                <path d="m4.9 16.8-.4.9"></path>
+                <path d="m7.5 10.3-.4.9"></path>
+                <path d="m7.5 17.7-.4-.9"></path>
+                <path d="m9.7 12.5-.9.4"></path>
+                <path d="m9.7 15.5-.9-.4"></path>
+                <circle cx="6" cy="14" r="3"></circle>
+              </svg>
+              Import
+            </button>
+            <button
+              onClick={onAdd}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              Add New
+            </button>
           </div>
         </div>
       </div>
 
       {/* Configurations list */}
-      <div className="bg-white shadow rounded-lg">
+      <div>
         {filteredAndSortedConfigs.length === 0 ? (
           <div className="px-6 py-12 text-center">
             {searchTerm ? (
