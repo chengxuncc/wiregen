@@ -17,12 +17,31 @@ interface ConfigProviderProps {
 
 export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
   const [configs, setConfigs] = useState<WireGuardConfig[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Check if localStorage is available
+  const isLocalStorageAvailable = (): boolean => {
+    try {
+      const testKey = '__localStorage_test__';
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   // Load configs from localStorage on initial render
   useEffect(() => {
-    const savedConfigs = localStorage.getItem('wireguardConfigs');
-    if (savedConfigs) {
-      try {
+    if (!isLocalStorageAvailable()) {
+      console.warn('localStorage is not available. Configurations will not persist.');
+      setIsInitialized(true);
+      return;
+    }
+
+    try {
+      const savedConfigs = localStorage.getItem('wireguardConfigs');
+      if (savedConfigs) {
         // Parse the JSON string and convert date strings back to Date objects
         const parsedConfigs = JSON.parse(savedConfigs, (key, value) => {
           if (key === 'createdAt' || key === 'updatedAt') {
@@ -31,16 +50,27 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
           return value;
         });
         setConfigs(parsedConfigs);
-      } catch (error) {
-        console.error('Failed to parse saved configs:', error);
       }
+    } catch (error) {
+      console.error('Failed to load saved configs:', error);
+    } finally {
+      setIsInitialized(true);
     }
   }, []);
 
-  // Save configs to localStorage whenever they change
+  // Save configs to localStorage whenever they change (but not on initial load)
   useEffect(() => {
-    localStorage.setItem('wireguardConfigs', JSON.stringify(configs));
-  }, [configs]);
+    if (!isInitialized || !isLocalStorageAvailable()) {
+      return;
+    }
+
+    try {
+      localStorage.setItem('wireguardConfigs', JSON.stringify(configs));
+    } catch (error) {
+      console.error('Failed to save configs to localStorage:', error);
+      // You could add user notification here if needed
+    }
+  }, [configs, isInitialized]);
 
   const addConfig = (config: WireGuardConfig) => {
     setConfigs(prev => [...prev, config]);
