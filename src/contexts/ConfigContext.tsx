@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { WireGuardConfig } from '../types/WireGuardConfig';
+import { SystemSettings, DEFAULT_SYSTEM_SETTINGS } from '../types/SystemSettings';
 
 interface ConfigContextType {
   configs: WireGuardConfig[];
@@ -7,6 +8,8 @@ interface ConfigContextType {
   updateConfig: (config: WireGuardConfig) => void;
   deleteConfig: (id: string) => void;
   getConfig: (id: string) => WireGuardConfig | undefined;
+  systemSettings: SystemSettings;
+  updateSystemSettings: (settings: SystemSettings) => void;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -17,6 +20,7 @@ interface ConfigProviderProps {
 
 export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
   const [configs, setConfigs] = useState<WireGuardConfig[]>([]);
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Check if localStorage is available
@@ -31,7 +35,7 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     }
   };
 
-  // Load configs from localStorage on initial render
+  // Load configs and system settings from localStorage on initial render
   useEffect(() => {
     if (!isLocalStorageAvailable()) {
       console.warn('localStorage is not available. Configurations will not persist.');
@@ -51,8 +55,14 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         });
         setConfigs(parsedConfigs);
       }
+
+      const savedSystemSettings = localStorage.getItem('wireguardSystemSettings');
+      if (savedSystemSettings) {
+        const parsedSettings = JSON.parse(savedSystemSettings);
+        setSystemSettings({ ...DEFAULT_SYSTEM_SETTINGS, ...parsedSettings });
+      }
     } catch (error) {
-      console.error('Failed to load saved configs:', error);
+      console.error('Failed to load saved configs or system settings:', error);
     } finally {
       setIsInitialized(true);
     }
@@ -72,6 +82,19 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     }
   }, [configs, isInitialized]);
 
+  // Save system settings to localStorage whenever they change (but not on initial load)
+  useEffect(() => {
+    if (!isInitialized || !isLocalStorageAvailable()) {
+      return;
+    }
+
+    try {
+      localStorage.setItem('wireguardSystemSettings', JSON.stringify(systemSettings));
+    } catch (error) {
+      console.error('Failed to save system settings to localStorage:', error);
+    }
+  }, [systemSettings, isInitialized]);
+
   const addConfig = (config: WireGuardConfig) => {
     setConfigs(prev => [...prev, config]);
   };
@@ -88,8 +111,20 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     return configs.find(c => c.id === id);
   };
 
+  const updateSystemSettings = (settings: SystemSettings) => {
+    setSystemSettings(settings);
+  };
+
   return (
-    <ConfigContext.Provider value={{ configs, addConfig, updateConfig, deleteConfig, getConfig }}>
+    <ConfigContext.Provider value={{ 
+      configs, 
+      addConfig, 
+      updateConfig, 
+      deleteConfig, 
+      getConfig, 
+      systemSettings, 
+      updateSystemSettings 
+    }}>
       {children}
     </ConfigContext.Provider>
   );

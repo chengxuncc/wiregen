@@ -5,6 +5,7 @@ import ConfigList from './components/ConfigList';
 import ConfigForm from './components/ConfigForm';
 import ConfigDetail from './components/ConfigDetail';
 import ImportConfig from './components/ImportConfig';
+import SystemSettings from './components/SystemSettings';
 import { ConfigProvider, useConfig } from './contexts/ConfigContext';
 import { WireGuardConfig } from './types/WireGuardConfig';
 
@@ -13,12 +14,13 @@ enum View {
   LIST,
   DETAIL,
   FORM,
-  IMPORT
+  IMPORT,
+  SETTINGS
 }
 
 // Main App content
 const AppContent: React.FC = () => {
-  const { configs, addConfig, updateConfig, deleteConfig } = useConfig();
+  const { configs, addConfig, updateConfig, deleteConfig, systemSettings } = useConfig();
   const [currentView, setCurrentView] = useState<View>(View.LIST);
   const [selectedConfig, setSelectedConfig] = useState<WireGuardConfig | undefined>(undefined);
   
@@ -56,6 +58,11 @@ const AppContent: React.FC = () => {
   // Handle importing a config
   const handleImportConfig = () => {
     setCurrentView(View.IMPORT);
+  };
+
+  // Handle system settings
+  const handleSystemSettings = () => {
+    setCurrentView(View.SETTINGS);
   };
   
   // Handle the imported config
@@ -120,6 +127,12 @@ const AppContent: React.FC = () => {
       content += `DNS = ${config.interface.dns.join(', ')}\n`;
     }
     
+    // Add MTU from individual config or system settings
+    const mtu = config.interface.mtu || systemSettings.mtu;
+    if (mtu) {
+      content += `MTU = ${mtu}\n`;
+    }
+    
     config.peers.forEach(peer => {
       content += '\n[Peer]\n';
       content += `PublicKey = ${peer.publicKey}\n`;
@@ -129,8 +142,13 @@ const AppContent: React.FC = () => {
         content += `Endpoint = ${peer.endpoint}\n`;
       }
       
-      if (peer.persistentKeepalive !== undefined) {
-        content += `PersistentKeepalive = ${peer.persistentKeepalive}\n`;
+      // Use peer's persistent keepalive or system default
+      const persistentKeepalive = peer.persistentKeepalive !== undefined 
+        ? peer.persistentKeepalive 
+        : systemSettings.defaultPersistentKeepalive;
+      
+      if (persistentKeepalive !== undefined && persistentKeepalive > 0) {
+        content += `PersistentKeepalive = ${persistentKeepalive}\n`;
       }
       
       if (peer.presharedKey) {
@@ -153,6 +171,7 @@ const AppContent: React.FC = () => {
             onAdd={handleAddConfig}
             onImport={handleImportConfig}
             onExport={handleExportAllConfigs}
+            onSettings={handleSystemSettings}
           />
         );
       case View.DETAIL:
@@ -185,6 +204,12 @@ const AppContent: React.FC = () => {
           <ImportConfig
             onImport={handleConfigImported}
             onCancel={() => setCurrentView(View.LIST)}
+          />
+        );
+      case View.SETTINGS:
+        return (
+          <SystemSettings
+            onBack={() => setCurrentView(View.LIST)}
           />
         );
       default:

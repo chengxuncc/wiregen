@@ -13,6 +13,7 @@ export interface InterfaceConfig {
   address: string[];
   listenPort?: number;
   dns?: string[];
+  mtu?: number;
 }
 
 export interface WireGuardConfig {
