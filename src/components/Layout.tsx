@@ -3,11 +3,12 @@ import React, { ReactNode } from 'react';
 interface LayoutProps {
   children: ReactNode;
   onSettings?: () => void;
-  onExportAll?: () => void;
+  onBackup?: () => void;
+  onRecover?: () => void;
   showHeaderButtons?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, onSettings, onExportAll, showHeaderButtons = true }) => {
+const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onRecover, showHeaderButtons = true }) => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-white shadow">
@@ -16,16 +17,28 @@ const Layout: React.FC<LayoutProps> = ({ children, onSettings, onExportAll, show
             <h1 className="text-2xl font-bold text-gray-900">WireGuard Config Manager</h1>
             {showHeaderButtons && (
               <div className="flex space-x-3">
-                {onExportAll && (
+                {onRecover && (
                   <button
-                    onClick={onExportAll}
+                    onClick={onRecover}
                     className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    title="Export All Configurations"
+                    title="Restore from Backup"
+                  >
+                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Restore
+                  </button>
+                )}
+                {onBackup && (
+                  <button
+                    onClick={onBackup}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    title="Backup Configurations and System Settings"
                   >
                     <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Export All
+                    Backup
                   </button>
                 )}
                 {onSettings && (

@@ -5,9 +5,11 @@ import ConfigList from './components/ConfigList';
 import ConfigForm from './components/ConfigForm';
 import ConfigDetail from './components/ConfigDetail';
 import ImportConfig from './components/ImportConfig';
+import ImportBackup from './components/ImportBackup';
 import SystemSettings from './components/SystemSettings';
 import { ConfigProvider, useConfig } from './contexts/ConfigContext';
 import { WireGuardConfig } from './types/WireGuardConfig';
+import { SystemSettings as SystemSettingsType } from './types/SystemSettings';
 
 // Enum for application views
 enum View {
@@ -15,6 +17,7 @@ enum View {
   DETAIL,
   FORM,
   IMPORT,
+  IMPORT_BACKUP,
   SETTINGS
 }
 
@@ -24,6 +27,7 @@ const VIEW_PATHS: Record<View, string> = {
   [View.DETAIL]: '/config',
   [View.FORM]: '/edit',
   [View.IMPORT]: '/import',
+  [View.IMPORT_BACKUP]: '/import-backup',
   [View.SETTINGS]: '/settings'
 };
 
@@ -32,12 +36,13 @@ const PATH_VIEWS: Record<string, View> = {
   '/config': View.DETAIL,
   '/edit': View.FORM,
   '/import': View.IMPORT,
+  '/import-backup': View.IMPORT_BACKUP,
   '/settings': View.SETTINGS
 };
 
 // Main App content
 const AppContent: React.FC = () => {
-  const { configs, addConfig, updateConfig, deleteConfig, systemSettings } = useConfig();
+  const { configs, addConfig, updateConfig, deleteConfig, replaceAllConfigs, systemSettings, updateSystemSettings } = useConfig();
   const [currentView, setCurrentView] = useState<View>(View.LIST);
   const [selectedConfig, setSelectedConfig] = useState<WireGuardConfig | undefined>(undefined);
 
@@ -72,19 +77,27 @@ const AppContent: React.FC = () => {
     setCurrentView(view);
   };
   
-  // Handle exporting all configurations as JSON
-  const handleExportAllConfigs = () => {
-    if (configs.length === 0) {
-      alert('No configurations to export');
+  // Handle backing up all configurations and system settings as JSON
+  const handleBackup = () => {
+    if (configs.length === 0 && !systemSettings) {
+      alert('No configurations or system settings to backup');
       return;
     }
     
+    // Create backup object with configs and system settings
+    const backupData = {
+      configs: configs,
+      systemSettings: systemSettings,
+      backupDate: new Date().toISOString(),
+      version: '1.0'
+    };
+    
     // Create a blob and download it
-    const blob = new Blob([JSON.stringify(configs, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `wireguard-configs-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `wireguard-backup-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -106,6 +119,23 @@ const AppContent: React.FC = () => {
   // Handle importing a config
   const handleImportConfig = () => {
     navigateToView(View.IMPORT);
+  };
+
+  // Handle importing a backup
+  const handleImportBackup = () => {
+    navigateToView(View.IMPORT_BACKUP);
+  };
+
+  // Handle the imported backup
+  const handleBackupImported = (configs: WireGuardConfig[], systemSettings: SystemSettingsType) => {
+    // Replace all existing configs and system settings
+    // Clear existing configs and add new ones
+    replaceAllConfigs(configs);
+    
+    // Update system settings
+    updateSystemSettings(systemSettings);
+    
+    navigateToView(View.LIST);
   };
 
   // Handle system settings
@@ -253,6 +283,13 @@ const AppContent: React.FC = () => {
             onCancel={() => navigateToView(View.LIST)}
           />
         );
+      case View.IMPORT_BACKUP:
+        return (
+          <ImportBackup
+            onImport={handleBackupImported} // Assuming ImportBackup also adds to configs
+            onCancel={() => navigateToView(View.LIST)}
+          />
+        );
       case View.SETTINGS:
         return (
           <SystemSettings
@@ -267,7 +304,8 @@ const AppContent: React.FC = () => {
   return (
     <Layout
       onSettings={handleSystemSettings}
-      onExportAll={handleExportAllConfigs}
+      onBackup={handleBackup}
+      onRecover={handleImportBackup}
       showHeaderButtons={currentView === View.LIST}
     >
       {renderView()}

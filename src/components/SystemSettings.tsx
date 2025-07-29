@@ -56,7 +56,7 @@ const SystemSettingsComponent: React.FC<SystemSettingsProps> = ({ onBack }) => {
       </div>
       <form onSubmit={handleSubmit}>
         <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6">
             <div>
               <label htmlFor="mtu" className="block text-sm font-medium text-gray-700">
                 MTU (Maximum Transmission Unit)
@@ -70,14 +70,14 @@ const SystemSettingsComponent: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   value={formData.mtu || ''}
                   onChange={(e) => handleInputChange('mtu', e.target.value)}
                   className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  placeholder="1420 (default)"
+                  placeholder="1380 (default)"
                 />
               </div>
               {errors.mtu && (
                 <p className="mt-2 text-sm text-red-600">{errors.mtu}</p>
               )}
               <p className="mt-2 text-sm text-gray-500">
-                Standard WireGuard MTU is 1420. Leave empty to use system default.
+                Standard WireGuard MTU is 1380. Leave empty to use system default.
               </p>
             </div>
 

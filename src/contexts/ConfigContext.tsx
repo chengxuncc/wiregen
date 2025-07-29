@@ -7,6 +7,7 @@ interface ConfigContextType {
   addConfig: (config: WireGuardConfig) => void;
   updateConfig: (config: WireGuardConfig) => void;
   deleteConfig: (id: string) => void;
+  replaceAllConfigs: (configs: WireGuardConfig[]) => void;
   getConfig: (id: string) => WireGuardConfig | undefined;
   systemSettings: SystemSettings;
   updateSystemSettings: (settings: SystemSettings) => void;
@@ -107,6 +108,10 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     setConfigs(prev => prev.filter(c => c.id !== id));
   };
 
+  const replaceAllConfigs = (configs: WireGuardConfig[]) => {
+    setConfigs(configs);
+  };
+
   const getConfig = (id: string) => {
     return configs.find(c => c.id === id);
   };
@@ -121,6 +126,7 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
       addConfig, 
       updateConfig, 
       deleteConfig, 
+      replaceAllConfigs,
       getConfig, 
       systemSettings, 
       updateSystemSettings 
