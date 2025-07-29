@@ -18,6 +18,8 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({
   onBack,
 }) => {
   const [editedConfig, setEditedConfig] = useState<WireGuardConfig>(config);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
 
   // Update edited config when prop changes
@@ -26,14 +28,32 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({
   }, [config]);
 
   const handleSave = () => {
-    onSave(editedConfig);
+    setIsSaving(true);
+    // Update the timestamp when saving
+    const configToSave = {
+      ...editedConfig,
+      updatedAt: new Date()
+    };
+    onSave(configToSave);
+    // Reset saving state after a brief delay for visual feedback
+    setTimeout(() => {
+      setIsSaving(false);
+    }, 1000);
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    onDelete();
+    setShowDeleteConfirm(false);
   };
 
   const updateConfig = (updates: Partial<WireGuardConfig>) => {
     setEditedConfig(prev => ({
       ...prev,
-      ...updates,
-      updatedAt: new Date()
+      ...updates
     }));
   };
 
@@ -43,8 +63,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({
       interface: {
         ...prev.interface,
         ...updates
-      },
-      updatedAt: new Date()
+      }
     }));
   };
 
@@ -53,8 +72,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({
       ...prev,
       peers: prev.peers.map((peer, i) => 
         i === index ? { ...peer, ...updates } : peer
-      ),
-      updatedAt: new Date()
+      )
     }));
   };
 
@@ -68,16 +86,14 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({
     };
     setEditedConfig(prev => ({
       ...prev,
-      peers: [...prev.peers, newPeer],
-      updatedAt: new Date()
+      peers: [...prev.peers, newPeer]
     }));
   };
 
   const removePeer = (index: number) => {
     setEditedConfig(prev => ({
       ...prev,
-      peers: prev.peers.filter((_, i) => i !== index),
-      updatedAt: new Date()
+      peers: prev.peers.filter((_, i) => i !== index)
     }));
   };
 
@@ -237,17 +253,35 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({
                >
                  Back
                </button>
-               <button
-                 onClick={onDelete}
-                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-               >
-                 Delete
-               </button>
+               {showDeleteConfirm ? (
+                 <button
+                   onClick={handleDeleteConfirm}
+                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                 >
+                   Confirm 
+                 </button>
+               ) : (
+                 <button
+                   onClick={handleDeleteClick}
+                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                 >
+                   Delete
+                 </button>
+               )}
                <button
                  onClick={handleSave}
-                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                 disabled={isSaving}
+                 className={`inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                   isSaving 
+                     ? 'bg-green-600 cursor-not-allowed' 
+                     : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                 }`}
                >
-                 Save
+                              {isSaving ? (
+               'Saved'
+             ) : (
+                   'Save'
+                 )}
                </button>
              </div>
           </div>

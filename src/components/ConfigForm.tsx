@@ -28,6 +28,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ config, onSave, onCancel }) => 
   const [interfaceConfig, setInterfaceConfig] = useState<InterfaceConfig>(emptyInterfaceConfig);
   const [peers, setPeers] = useState<PeerConfig[]>([]);
   const [activeTab, setActiveTab] = useState('interface');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (config) {
@@ -35,12 +36,13 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ config, onSave, onCancel }) => 
       setInterfaceConfig(config.interface);
       setPeers(config.peers);
     } else {
-      // Initialize with one empty peer
-      setPeers([{ ...emptyPeerConfig }]);
+      // Initialize with no peers
+      setPeers([]);
     }
   }, [config]);
 
   const handleSave = () => {
+    setIsSaving(true);
     const newConfig: WireGuardConfig = {
       id: config?.id || uuidv4(),
       name,
@@ -58,7 +60,12 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ config, onSave, onCancel }) => 
       createdAt: config?.createdAt || new Date(),
       updatedAt: new Date(),
     };
+    
     onSave(newConfig);
+    // Reset saving state after a brief delay for visual feedback
+    setTimeout(() => {
+      setIsSaving(false);
+    }, 1000);
   };
 
   const handleInterfaceChange = (field: keyof InterfaceConfig, value: any) => {
@@ -464,9 +471,18 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ config, onSave, onCancel }) => 
           <button
             type="button"
             onClick={handleSave}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            disabled={isSaving}
+            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+              isSaving 
+                ? 'text-white bg-green-600 cursor-not-allowed' 
+                : 'text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+            }`}
           >
-            Save
+                         {isSaving ? (
+               'Saved!'
+             ) : (
+              'Save'
+            )}
           </button>
         </div>
       </div>
