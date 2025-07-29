@@ -93,12 +93,14 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
   // Handle saving a config (add or update)
   const handleSaveConfig = (config: WireGuardConfig) => {
-    if (configs.find(c => c.id === config.id)) {
-      updateConfig(config);
-    } else {
+    const isNewConfig = !configs.find(c => c.id === config.id);
+
+    if (isNewConfig) {
       addConfig(config);
+    } else {
+      updateConfig(config);
     }
-    navigateToView(View.DETAIL, config.id);
+    navigateToView(View.LIST);
   };
 
   // Generate WireGuard config file content

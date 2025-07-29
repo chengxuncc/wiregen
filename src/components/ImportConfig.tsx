@@ -28,7 +28,11 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
           onImport(config);
         }
       } catch (err) {
-        setError('Failed to parse the configuration file. Please ensure it is a valid WireGuard configuration.');
+        if (err instanceof Error) {
+          setError(`Failed to parse the configuration file: ${err.message}`);
+        } else {
+          setError('Failed to parse the configuration file. Please ensure it is a valid WireGuard configuration.');
+        }
         console.error('Import error:', err);
       }
     };
@@ -75,10 +79,18 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
         continue;
       }
       
-      if (!currentSection) continue;
+      if (!currentSection) {
+        if (line.includes('=')) {
+          throw new Error(`Configuration line "${line}" found outside of [Interface] or [Peer] section`);
+        }
+        continue;
+      }
+      
+      if (!line.includes('=')) {
+        throw new Error(`Invalid configuration line: "${line}". Expected format: Key = Value`);
+      }
       
       const [key, value] = line.split('=').map(part => part.trim());
-      
       if (currentSection === 'interface') {
         switch (key.toLowerCase()) {
           case 'privatekey':
@@ -93,6 +105,11 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
           case 'dns':
             interfaceConfig.dns = value.split(',').map(dns => dns.trim());
             break;
+          case 'mtu':
+            // MTU is optional, we can ignore it or store it
+            break;
+          default:
+            console.warn(`Unknown interface key: ${key}`);
         }
       } else if (currentSection === 'peer' && currentPeer) {
         switch (key.toLowerCase()) {
@@ -106,11 +123,17 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
             currentPeer.endpoint = value;
             break;
           case 'persistentkeepalive':
-            currentPeer.persistentKeepalive = parseInt(value);
+            const keepalive = parseInt(value);
+            if (isNaN(keepalive) || keepalive < 0) {
+              throw new Error(`Invalid persistent keepalive: ${value}. Must be a non-negative number`);
+            }
+            currentPeer.persistentKeepalive = keepalive;
             break;
           case 'presharedkey':
             currentPeer.presharedKey = value;
             break;
+          default:
+            console.warn(`Unknown peer key: ${key}`);
         }
       }
     }
@@ -119,29 +142,10 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
     if (currentPeer) {
       peers.push(currentPeer);
     }
-    
-    // Validate required fields
-    if (!interfaceConfig.privateKey) {
-      throw new Error('Private key is required in the interface section');
-    }
-    
-    if (interfaceConfig.address.length === 0) {
-      throw new Error('At least one address is required in the interface section');
-    }
-    
-    for (const peer of peers) {
-      if (!peer.publicKey) {
-        throw new Error('Public key is required for each peer');
-      }
-      
-      if (peer.allowedIPs.length === 0) {
-        throw new Error('At least one allowed IP is required for each peer');
-      }
-    }
-    
+
     return {
       id: uuidv4(),
-      name: configName,
+      name: configName || 'Imported Configuration',
       interface: interfaceConfig,
       peers,
       createdAt: new Date(),
@@ -180,6 +184,10 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
         <h3 className="text-lg font-medium leading-6 text-gray-900">
           Import WireGuard Configuration
         </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Import a single WireGuard configuration file (.conf format). 
+          To restore a complete backup, use the "Restore" button in the header instead.
+        </p>
         <div className="mt-4">
           <div
             className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
@@ -212,14 +220,14 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
                     name="file-upload"
                     type="file"
                     className="sr-only"
-                    accept=".conf"
+                    accept=".conf,.txt"
                     onChange={handleFileChange}
                     ref={fileInputRef}
                   />
                 </label>
                 <p className="pl-1">or drag and drop</p>
               </div>
-              <p className="text-xs text-gray-500">WireGuard .conf files only</p>
+              <p className="text-xs text-gray-500">WireGuard .conf or .txt files only</p>
               {fileName && (
                 <p className="text-sm text-indigo-600 mt-2">Selected: {fileName}</p>
               )}

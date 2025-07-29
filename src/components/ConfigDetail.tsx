@@ -110,11 +110,11 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSa
       ...editedConfig,
       updatedAt: new Date()
     };
-    onSave(configToSave);
     // Reset saving state after a brief delay for visual feedback
     setTimeout(() => {
+      onSave(configToSave);
       setIsSaving(false);
-    }, 1000);
+    }, 500);
   };
 
   const handleDeleteClick = () => {
@@ -291,7 +291,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSa
                 }`}
               >
                 {isSaving ? (
-                  'Saved'
+                    isNewConfig ? 'Created' : 'Saved'
                 ) : (
                   isNewConfig ? 'Create' : 'Save'
                 )}
