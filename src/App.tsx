@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Layout from './components/Layout';
 import ConfigList from './components/ConfigList';
@@ -18,11 +18,59 @@ enum View {
   SETTINGS
 }
 
+// URL path mapping
+const VIEW_PATHS: Record<View, string> = {
+  [View.LIST]: '/',
+  [View.DETAIL]: '/config',
+  [View.FORM]: '/edit',
+  [View.IMPORT]: '/import',
+  [View.SETTINGS]: '/settings'
+};
+
+const PATH_VIEWS: Record<string, View> = {
+  '/': View.LIST,
+  '/config': View.DETAIL,
+  '/edit': View.FORM,
+  '/import': View.IMPORT,
+  '/settings': View.SETTINGS
+};
+
 // Main App content
 const AppContent: React.FC = () => {
   const { configs, addConfig, updateConfig, deleteConfig, systemSettings } = useConfig();
   const [currentView, setCurrentView] = useState<View>(View.LIST);
   const [selectedConfig, setSelectedConfig] = useState<WireGuardConfig | undefined>(undefined);
+
+  // Initialize view from current URL
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const view = PATH_VIEWS[currentPath] || View.LIST;
+    setCurrentView(view);
+  }, []);
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const currentPath = window.location.pathname;
+      const view = PATH_VIEWS[currentPath] || View.LIST;
+      setCurrentView(view);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Update URL when view changes
+  const navigateToView = (view: View, configId?: string) => {
+    const path = VIEW_PATHS[view];
+    const url = configId ? `${path}/${configId}` : path;
+    
+    if (window.location.pathname !== url) {
+      window.history.pushState({ view, configId }, '', url);
+    }
+    
+    setCurrentView(view);
+  };
   
   // Handle exporting all configurations as JSON
   const handleExportAllConfigs = () => {
@@ -46,41 +94,42 @@ const AppContent: React.FC = () => {
   // Handle selecting a config to view details
   const handleSelectConfig = (config: WireGuardConfig) => {
     setSelectedConfig(config);
-    setCurrentView(View.DETAIL);
+    navigateToView(View.DETAIL, config.id);
   };
 
   // Handle adding a new config
   const handleAddConfig = () => {
     setSelectedConfig(undefined);
-    setCurrentView(View.FORM);
+    navigateToView(View.FORM);
   };
   
   // Handle importing a config
   const handleImportConfig = () => {
-    setCurrentView(View.IMPORT);
+    navigateToView(View.IMPORT);
   };
 
   // Handle system settings
   const handleSystemSettings = () => {
-    setCurrentView(View.SETTINGS);
+    navigateToView(View.SETTINGS);
   };
   
   // Handle the imported config
   const handleConfigImported = (config: WireGuardConfig) => {
     addConfig(config);
     setSelectedConfig(config);
-    setCurrentView(View.DETAIL);
+    navigateToView(View.DETAIL, config.id);
   };
 
   // Handle editing a config
   const handleEditConfig = () => {
-    setCurrentView(View.FORM);
+    navigateToView(View.FORM, selectedConfig?.id);
   };
 
   // Handle deleting a config
   const handleDeleteConfig = (id: string) => {
     deleteConfig(id);
-    setCurrentView(View.LIST);
+    setSelectedConfig(undefined);
+    navigateToView(View.LIST);
   };
 
   // Handle saving a config (add or update)
@@ -91,7 +140,7 @@ const AppContent: React.FC = () => {
       addConfig(config);
     }
     setSelectedConfig(config);
-    setCurrentView(View.DETAIL);
+    navigateToView(View.DETAIL, config.id);
   };
 
   // Handle exporting a config
@@ -170,8 +219,6 @@ const AppContent: React.FC = () => {
             onDelete={handleDeleteConfig}
             onAdd={handleAddConfig}
             onImport={handleImportConfig}
-            onExport={handleExportAllConfigs}
-            onSettings={handleSystemSettings}
           />
         );
       case View.DETAIL:
@@ -182,7 +229,7 @@ const AppContent: React.FC = () => {
             onEdit={handleEditConfig}
             onDelete={() => handleDeleteConfig(selectedConfig.id)}
             onExport={handleExportConfig}
-            onBack={() => setCurrentView(View.LIST)}
+            onBack={() => navigateToView(View.LIST)}
           />
         );
       case View.FORM:
@@ -192,9 +239,9 @@ const AppContent: React.FC = () => {
             onSave={handleSaveConfig}
             onCancel={() => {
               if (selectedConfig) {
-                setCurrentView(View.DETAIL);
+                navigateToView(View.DETAIL, selectedConfig.id);
               } else {
-                setCurrentView(View.LIST);
+                navigateToView(View.LIST);
               }
             }}
           />
@@ -203,13 +250,13 @@ const AppContent: React.FC = () => {
         return (
           <ImportConfig
             onImport={handleConfigImported}
-            onCancel={() => setCurrentView(View.LIST)}
+            onCancel={() => navigateToView(View.LIST)}
           />
         );
       case View.SETTINGS:
         return (
           <SystemSettings
-            onBack={() => setCurrentView(View.LIST)}
+            onBack={() => navigateToView(View.LIST)}
           />
         );
       default:
@@ -218,7 +265,11 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <Layout
+      onSettings={handleSystemSettings}
+      onExportAll={handleExportAllConfigs}
+      showHeaderButtons={currentView === View.LIST}
+    >
       {renderView()}
     </Layout>
   );

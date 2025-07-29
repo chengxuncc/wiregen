@@ -7,38 +7,20 @@ interface ConfigListProps {
   onDelete: (id: string) => void;
   onAdd: () => void;
   onImport: () => void;
-  onExport?: () => void;
-  onSettings?: () => void;
 }
 
-const ConfigList: React.FC<ConfigListProps> = ({ configs, onSelect, onDelete, onAdd, onImport, onExport, onSettings }) => {
+const ConfigList: React.FC<ConfigListProps> = ({ configs, onSelect, onDelete, onAdd, onImport }) => {
   return (
     <div className="bg-white shadow overflow-hidden sm:rounded-md">
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-900">WireGuard Configurations</h2>
         <div className="flex space-x-2">
-          {onSettings && (
-            <button
-              onClick={onSettings}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              System Settings
-            </button>
-          )}
           <button
             onClick={onImport}
             className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Import
           </button>
-          {onExport && (
-            <button
-              onClick={onExport}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Export All
-            </button>
-          )}
           <button
             onClick={onAdd}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
