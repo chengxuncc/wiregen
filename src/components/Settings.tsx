@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '../contexts/ConfigContext';
-import { Settings } from '../types/Settings';
+import { Settings, DEFAULT_SETTINGS } from '../types/Settings';
 import { validateIPv4CIDR, validateIPv6CIDR } from '../utils/validation';
 
 interface SettingsProps {
@@ -68,6 +68,19 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
     }));
   };
 
+  const handleUseDefault = (field: keyof Settings) => {
+    const defaultValue = DEFAULT_SETTINGS[field];
+    setFormData(prev => ({
+      ...prev,
+      [field]: defaultValue
+    }));
+  };
+
+  const handleUseAllDefaults = () => {
+    setFormData({ ...DEFAULT_SETTINGS });
+    setErrors({});
+  };
+
   return (
     <div className="bg-white shadow overflow-hidden sm:rounded-lg">
       <div className="px-4 py-5 sm:px-6">
@@ -83,7 +96,7 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
               <label htmlFor="mtu" className="block text-sm font-medium text-gray-700">
                 MTU (Maximum Transmission Unit)
               </label>
-              <div className="mt-1">
+              <div className="mt-1 flex">
                 <input
                   type="number"
                   id="mtu"
@@ -91,9 +104,19 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   max="1500"
                   value={formData.mtu || ''}
                   onChange={(e) => handleInputChange('mtu', e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
                   placeholder="1380 (default)"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleUseDefault('mtu')}
+                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
+                  title="Use default value"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
               </div>
               {errors.mtu && (
                 <p className="mt-2 text-sm text-red-600">{errors.mtu}</p>
@@ -107,15 +130,25 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
               <label htmlFor="defaultIPv4CIDR" className="block text-sm font-medium text-gray-700">
                 Default IPv4 CIDR
               </label>
-              <div className="mt-1">
+              <div className="mt-1 flex">
                 <input
                   type="text"
                   id="defaultIPv4CIDR"
                   value={formData.defaultIPv4CIDR || ''}
                   onChange={(e) => handleStringInputChange('defaultIPv4CIDR', e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
                   placeholder="10.0.0.0/24"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleUseDefault('defaultIPv4CIDR')}
+                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
+                  title="Use default value"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
               </div>
               {errors.defaultIPv4CIDR && (
                 <p className="mt-2 text-sm text-red-600">{errors.defaultIPv4CIDR}</p>
@@ -129,15 +162,25 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
               <label htmlFor="defaultIPv6CIDR" className="block text-sm font-medium text-gray-700">
                 Default IPv6 CIDR
               </label>
-              <div className="mt-1">
+              <div className="mt-1 flex">
                 <input
                   type="text"
                   id="defaultIPv6CIDR"
                   value={formData.defaultIPv6CIDR || ''}
                   onChange={(e) => handleStringInputChange('defaultIPv6CIDR', e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
                   placeholder="fd00::/64"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleUseDefault('defaultIPv6CIDR')}
+                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
+                  title="Use default value"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
               </div>
               {errors.defaultIPv6CIDR && (
                 <p className="mt-2 text-sm text-red-600">{errors.defaultIPv6CIDR}</p>
@@ -150,7 +193,7 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
               <label htmlFor="defaultPersistentKeepalive" className="block text-sm font-medium text-gray-700">
                 Default Persistent Keepalive (seconds)
               </label>
-              <div className="mt-1">
+              <div className="mt-1 flex">
                 <input
                   type="number"
                   id="defaultPersistentKeepalive"
@@ -158,9 +201,19 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   max="65535"
                   value={formData.defaultPersistentKeepalive || ''}
                   onChange={(e) => handleInputChange('defaultPersistentKeepalive', e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
                   placeholder="25 (default)"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleUseDefault('defaultPersistentKeepalive')}
+                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
+                  title="Use default value"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
               </div>
               {errors.defaultPersistentKeepalive && (
                 <p className="mt-2 text-sm text-red-600">{errors.defaultPersistentKeepalive}</p>
@@ -179,6 +232,13 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
             className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleUseAllDefaults}
+            className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Use All Defaults
           </button>
           <button
             type="submit"
