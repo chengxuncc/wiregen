@@ -169,7 +169,6 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
   // Handle resetting all data with two-step confirmation
   const handleReset = () => {
-    const configCount = configs.length;
     resetAllData();
     navigateToView(View.LIST);
   };

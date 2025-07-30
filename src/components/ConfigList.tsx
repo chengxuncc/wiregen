@@ -83,7 +83,7 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'name' | 'updatedAt' | 'peers')}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             >
               <option value="updatedAt">Sort by: Recently Updated</option>
               <option value="name">Sort by: Name</option>
@@ -249,4 +249,3 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
 };
 
 export default ConfigList;
-

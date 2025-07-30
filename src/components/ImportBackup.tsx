@@ -14,7 +14,6 @@ interface ImportBackupProps {
 }
 
 const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
-  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [preview, setPreview] = useState<BackupData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +21,6 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) {
-      setFile(null);
       setPreview(null);
       setError('');
       return;
@@ -30,12 +28,10 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
 
     if (selectedFile.type !== 'application/json' && !selectedFile.name.endsWith('.json')) {
       setError('Please select a valid JSON file');
-      setFile(null);
       setPreview(null);
       return;
     }
 
-    setFile(selectedFile);
     setError('');
     setIsLoading(true);
 
