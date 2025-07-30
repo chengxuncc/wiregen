@@ -277,9 +277,9 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
           <button
             type="button"
             onClick={handleUseAllDefaults}
-            className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex justify-center py-2 px-4 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           >
-            Use All Defaults
+            Use Defaults
           </button>
           <button
             type="submit"

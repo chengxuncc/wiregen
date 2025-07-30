@@ -11,7 +11,8 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     deleteConfig,
     replaceAllConfigs,
     settings,
-    updateSettings
+    updateSettings,
+    resetAllData
   } = useConfig();
 
   // Handle backing up all configurations and settings as JSON
@@ -166,6 +167,13 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     URL.revokeObjectURL(url);
   };
 
+  // Handle resetting all data with two-step confirmation
+  const handleReset = () => {
+    const configCount = configs.length;
+    resetAllData();
+    navigateToView(View.LIST);
+  };
+
   return {
     configs,
     settings,
@@ -181,6 +189,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     handleDeleteConfig,
     handleSaveConfig,
     handleExportConfig,
+    handleReset,
     generateWireGuardConfig
   };
-}; 
+};

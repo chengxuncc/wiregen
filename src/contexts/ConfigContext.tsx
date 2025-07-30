@@ -11,6 +11,7 @@ interface ConfigContextType {
   getConfig: (id: string) => WireGuardConfig | undefined;
   settings: Settings;
   updateSettings: (settings: Settings) => void;
+  resetAllData: () => void;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -120,6 +121,15 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     setSettings(settings);
   };
 
+  const resetAllData = () => {
+    setConfigs([]);
+    setSettings(DEFAULT_SETTINGS);
+    if (isLocalStorageAvailable()) {
+      localStorage.removeItem('wireguardConfigs');
+      localStorage.removeItem('wireguardSettings');
+    }
+  };
+
   return (
     <ConfigContext.Provider value={{ 
       configs, 
@@ -129,7 +139,8 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
       replaceAllConfigs,
       getConfig,
       settings,
-      updateSettings
+      updateSettings,
+      resetAllData
     }}>
       {children}
     </ConfigContext.Provider>

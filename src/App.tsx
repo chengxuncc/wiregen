@@ -23,7 +23,8 @@ const AppContent: React.FC = () => {
     handleEditConfig,
     handleDeleteConfig,
     handleSaveConfig,
-    handleExportConfig
+    handleExportConfig,
+    handleReset
   } = useConfigActions(navigateToView);
 
   const handleBack = () => {
@@ -43,6 +44,7 @@ const AppContent: React.FC = () => {
       onSettings={handleSettings}
       onBackup={handleBackup}
       onRestore={handleRestore}
+      onReset={handleReset}
       onHome={handleHome}
       showHeaderButtons={currentView === View.LIST}
     >
