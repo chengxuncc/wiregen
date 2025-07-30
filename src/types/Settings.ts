@@ -2,14 +2,16 @@
 
 export interface Settings {
   mtu?: number; // Maximum Transmission Unit (default: 1380 for WireGuard)
-  defaultIPv4CIDR?: string; // Default IPv4 CIDR for new configurations
-  defaultIPv6CIDR?: string; // Default IPv6 CIDR for new configurations
-  defaultPersistentKeepalive?: number; // Default persistent keepalive in seconds
+  IPv4CIDR?: string; // IPv4 CIDR for new configurations
+  IPv6CIDR?: string; // IPv6 CIDR for new configurations
+  persistentKeepalive?: number; // persistent keepalive in seconds
+  listenPort?: number; // listen port for new configurations
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  mtu: 1380, // Standard WireGuard MTU
-  defaultIPv4CIDR: '10.0.10.0/24', // Common private network
-  defaultIPv6CIDR: 'fd10::/64', // ULA (Unique Local Address) range
-  defaultPersistentKeepalive: 25, // Common default value
+  IPv4CIDR: '10.0.10.0/24',
+  IPv6CIDR: 'fd10::/64',
+  mtu: 1380,
+  listenPort: 51821,
+  persistentKeepalive: 15,
 };

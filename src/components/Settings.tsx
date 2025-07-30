@@ -21,23 +21,29 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
       }
     }
 
-    if (formData.defaultPersistentKeepalive !== undefined) {
-      if (formData.defaultPersistentKeepalive < 0 || formData.defaultPersistentKeepalive > 65535) {
-        newErrors.defaultPersistentKeepalive = 'Persistent Keepalive must be between 0 and 65535 seconds';
+    if (formData.persistentKeepalive !== undefined) {
+      if (formData.persistentKeepalive < 0 || formData.persistentKeepalive > 65535) {
+        newErrors.persistentKeepalive = 'Persistent Keepalive must be between 0 and 65535 seconds';
       }
     }
 
-    if (formData.defaultIPv4CIDR) {
-      const ipv4Errors = validateIPv4CIDR(formData.defaultIPv4CIDR);
+    if (formData.listenPort !== undefined) {
+      if (formData.listenPort < 1 || formData.listenPort > 65535) {
+        newErrors.listenPort = 'Listen Port must be between 1 and 65535';
+      }
+    }
+
+    if (formData.IPv4CIDR) {
+      const ipv4Errors = validateIPv4CIDR(formData.IPv4CIDR);
       if (ipv4Errors.length > 0) {
-        newErrors.defaultIPv4CIDR = ipv4Errors[0];
+        newErrors.IPv4CIDR = ipv4Errors[0];
       }
     }
 
-    if (formData.defaultIPv6CIDR) {
-      const ipv6Errors = validateIPv6CIDR(formData.defaultIPv6CIDR);
+    if (formData.IPv6CIDR) {
+      const ipv6Errors = validateIPv6CIDR(formData.IPv6CIDR);
       if (ipv6Errors.length > 0) {
-        newErrors.defaultIPv6CIDR = ipv6Errors[0];
+        newErrors.IPv6CIDR = ipv6Errors[0];
       }
     }
 
@@ -93,6 +99,104 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
         <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
           <div className="grid grid-cols-1 gap-6">
             <div>
+              <label htmlFor="IPv4CIDR" className="block text-sm font-medium text-gray-700">
+                IPv4 CIDR
+              </label>
+              <div className="mt-1 flex">
+                <input
+                  type="text"
+                  id="IPv4CIDR"
+                  value={formData.IPv4CIDR || ''}
+                  onChange={(e) => handleStringInputChange('IPv4CIDR', e.target.value)}
+                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
+                  placeholder="10.0.0.0/24"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleUseDefault('IPv4CIDR')}
+                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
+                  title="Use default value"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
+              </div>
+              {errors.IPv4CIDR && (
+                <p className="mt-2 text-sm text-red-600">{errors.IPv4CIDR}</p>
+              )}
+              <p className="mt-2 text-sm text-gray-500">
+                Default IPv4 network range for new configurations. Common values: 10.0.0.0/24, 192.168.1.0/24
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="IPv6CIDR" className="block text-sm font-medium text-gray-700">
+                IPv6 CIDR
+              </label>
+              <div className="mt-1 flex">
+                <input
+                  type="text"
+                  id="IPv6CIDR"
+                  value={formData.IPv6CIDR || ''}
+                  onChange={(e) => handleStringInputChange('IPv6CIDR', e.target.value)}
+                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
+                  placeholder="fd00::/64"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleUseDefault('IPv6CIDR')}
+                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
+                  title="Use default value"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
+              </div>
+              {errors.IPv6CIDR && (
+                <p className="mt-2 text-sm text-red-600">{errors.IPv6CIDR}</p>
+              )}
+              <p className="mt-2 text-sm text-gray-500">
+                Default IPv6 network range for new configurations. Use ULA range (fd00::/8) for private networks.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="listenPort" className="block text-sm font-medium text-gray-700">
+                Listen Port
+              </label>
+              <div className="mt-1 flex">
+                <input
+                  type="number"
+                  id="listenPort"
+                  min="1"
+                  max="65535"
+                  value={formData.listenPort || ''}
+                  onChange={(e) => handleInputChange('listenPort', e.target.value)}
+                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
+                  placeholder="51821"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleUseDefault('listenPort')}
+                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
+                  title="Use default value"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
+              </div>
+              {errors.listenPort && (
+                <p className="mt-2 text-sm text-red-600">{errors.listenPort}</p>
+              )}
+              <p className="mt-2 text-sm text-gray-500">
+                Default listen port for new server configurations. Common ports: 51820, 51821.
+              </p>
+            </div>
+
+            <div>
               <label htmlFor="mtu" className="block text-sm font-medium text-gray-700">
                 MTU (Maximum Transmission Unit)
               </label>
@@ -127,86 +231,23 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label htmlFor="defaultIPv4CIDR" className="block text-sm font-medium text-gray-700">
-                Default IPv4 CIDR
-              </label>
-              <div className="mt-1 flex">
-                <input
-                  type="text"
-                  id="defaultIPv4CIDR"
-                  value={formData.defaultIPv4CIDR || ''}
-                  onChange={(e) => handleStringInputChange('defaultIPv4CIDR', e.target.value)}
-                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
-                  placeholder="10.0.0.0/24"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleUseDefault('defaultIPv4CIDR')}
-                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
-                  title="Use default value"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                  </svg>
-                </button>
-              </div>
-              {errors.defaultIPv4CIDR && (
-                <p className="mt-2 text-sm text-red-600">{errors.defaultIPv4CIDR}</p>
-              )}
-              <p className="mt-2 text-sm text-gray-500">
-                Default IPv4 network range for new configurations. Common values: 10.0.0.0/24, 192.168.1.0/24
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="defaultIPv6CIDR" className="block text-sm font-medium text-gray-700">
-                Default IPv6 CIDR
-              </label>
-              <div className="mt-1 flex">
-                <input
-                  type="text"
-                  id="defaultIPv6CIDR"
-                  value={formData.defaultIPv6CIDR || ''}
-                  onChange={(e) => handleStringInputChange('defaultIPv6CIDR', e.target.value)}
-                  className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
-                  placeholder="fd00::/64"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleUseDefault('defaultIPv6CIDR')}
-                  className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
-                  title="Use default value"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                  </svg>
-                </button>
-              </div>
-              {errors.defaultIPv6CIDR && (
-                <p className="mt-2 text-sm text-red-600">{errors.defaultIPv6CIDR}</p>
-              )}
-              <p className="mt-2 text-sm text-gray-500">
-                Default IPv6 network range for new configurations. Use ULA range (fd00::/8) for private networks.
-              </p>
-            </div>
-            <div>
-              <label htmlFor="defaultPersistentKeepalive" className="block text-sm font-medium text-gray-700">
-                Default Persistent Keepalive (seconds)
+              <label htmlFor="persistentKeepalive" className="block text-sm font-medium text-gray-700">
+                Persistent Keepalive (seconds)
               </label>
               <div className="mt-1 flex">
                 <input
                   type="number"
-                  id="defaultPersistentKeepalive"
+                  id="persistentKeepalive"
                   min="0"
                   max="65535"
-                  value={formData.defaultPersistentKeepalive || ''}
-                  onChange={(e) => handleInputChange('defaultPersistentKeepalive', e.target.value)}
+                  value={formData.persistentKeepalive || ''}
+                  onChange={(e) => handleInputChange('persistentKeepalive', e.target.value)}
                   className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
                   placeholder="25 (default)"
                 />
                 <button
                   type="button"
-                  onClick={() => handleUseDefault('defaultPersistentKeepalive')}
+                  onClick={() => handleUseDefault('persistentKeepalive')}
                   className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100"
                   title="Use default value"
                 >
@@ -215,8 +256,8 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   </svg>
                 </button>
               </div>
-              {errors.defaultPersistentKeepalive && (
-                <p className="mt-2 text-sm text-red-600">{errors.defaultPersistentKeepalive}</p>
+              {errors.persistentKeepalive && (
+                <p className="mt-2 text-sm text-red-600">{errors.persistentKeepalive}</p>
               )}
               <p className="mt-2 text-sm text-gray-500">
                 Default keepalive interval for new peer configurations. Set to 0 to disable.

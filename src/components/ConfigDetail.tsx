@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {WireGuardConfig} from '../types/WireGuardConfig';
-import {Settings} from '../types/Settings';
+import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
 
@@ -84,7 +84,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     interface: {
       privateKey: '',
       address: [''],
-      listenPort: undefined,
+      listenPort: settings.listenPort ? settings.listenPort : DEFAULT_SETTINGS.listenPort,
       dns: [],
     },
     peers: [],
@@ -251,7 +251,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
 
       const persistentKeepalive = peer.persistentKeepalive !== undefined
         ? peer.persistentKeepalive
-        : settings.defaultPersistentKeepalive;
+        : settings.persistentKeepalive;
 
       if (persistentKeepalive !== undefined && persistentKeepalive > 0) {
         content += `PersistentKeepalive = ${persistentKeepalive}\n`;
@@ -341,7 +341,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               value={editedConfig.interface.listenPort || ''}
               onChange={(value) => updateInterface({listenPort: value ? parseInt(value) : undefined})}
               type="number"
-              placeholder="Auto"
+              placeholder={settings.listenPort ? settings.listenPort.toString() : DEFAULT_SETTINGS.listenPort!.toString()}
             />
             <div className="sm:col-span-2">
               <EditableArrayField

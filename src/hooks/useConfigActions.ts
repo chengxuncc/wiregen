@@ -135,7 +135,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
       // Add persistent keepalive from individual peer or settings
       const persistentKeepalive = peer.persistentKeepalive !== undefined
         ? peer.persistentKeepalive
-        : settings.defaultPersistentKeepalive;
+        : settings.persistentKeepalive;
 
       if (persistentKeepalive !== undefined && persistentKeepalive > 0) {
         content += `PersistentKeepalive = ${persistentKeepalive}\n`;

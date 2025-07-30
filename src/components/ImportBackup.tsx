@@ -137,7 +137,7 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
                   <span className="text-sm font-medium text-gray-700">Settings:</span>
                   <div className="ml-2 text-sm text-gray-600">
                     <div>MTU: {preview.settings.mtu || 'Not set'}</div>
-                    <div>Default Persistent Keepalive: {preview.settings.defaultPersistentKeepalive || 'Not set'}</div>
+                    <div>Default Persistent Keepalive: {preview.settings.persistentKeepalive || 'Not set'}</div>
                   </div>
                 </div>
                 
