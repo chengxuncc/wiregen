@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#83161a" stroke="none"/>
+
+  <!-- WireGuard-inspired design with interconnected nodes -->
+  <g fill="white" stroke="white" stroke-width="1.5">
+    <!-- Central node -->
+    <circle cx="16" cy="16" r="2" fill="white"/>
+
+    <!-- Connection lines -->
+    <line x1="8" y1="8" x2="16" y2="16"/>
+    <line x1="24" y1="8" x2="16" y2="16"/>
+    <line x1="8" y1="24" x2="16" y2="16"/>
+    <line x1="24" y1="24" x2="16" y2="16"/>
+
+    <!-- Corner nodes -->
+    <circle cx="8" cy="8" r="1.5" fill="white"/>
+    <circle cx="24" cy="8" r="1.5" fill="white"/>
+    <circle cx="8" cy="24" r="1.5" fill="white"/>
+    <circle cx="24" cy="24" r="1.5" fill="white"/>
+
+    <!-- Additional connection nodes -->
+    <circle cx="16" cy="6" r="1" fill="white"/>
+    <circle cx="26" cy="16" r="1" fill="white"/>
+    <circle cx="16" cy="26" r="1" fill="white"/>
+    <circle cx="6" cy="16" r="1" fill="white"/>
+
+    <!-- Connection lines to edge nodes -->
+    <line x1="16" y1="6" x2="16" y2="16" stroke-width="1"/>
+    <line x1="26" y1="16" x2="16" y2="16" stroke-width="1"/>
+    <line x1="16" y1="26" x2="16" y2="16" stroke-width="1"/>
+    <line x1="6" y1="16" x2="16" y2="16" stroke-width="1"/>
+  </g>
+</svg>
+
