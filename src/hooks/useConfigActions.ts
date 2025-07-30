@@ -96,10 +96,11 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
     if (isNewConfig) {
       addConfig(config);
+      navigateToView(View.LIST);
     } else {
       updateConfig(config);
+      navigateToView(View.DETAIL, config.id);
     }
-    navigateToView(View.LIST);
   };
 
   // Generate WireGuard config file content

@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {WireGuardConfig} from '../types/WireGuardConfig';
 import {Settings} from '../types/Settings';
 import { v4 as uuidv4 } from 'uuid';
+import QRCode from 'qrcode';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
@@ -84,7 +85,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
       privateKey: '',
       address: [''],
       listenPort: undefined,
-      dns: [''],
+      dns: [],
     },
     peers: [],
     createdAt: new Date(),
@@ -94,6 +95,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const [editedConfig, setEditedConfig] = useState<WireGuardConfig>(config || createEmptyConfig());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const isNewConfig = !config;
 
   // Update edited config when prop changes
@@ -102,6 +104,30 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
       setEditedConfig(config);
     }
   }, [config]);
+
+  // Generate QR code when config changes
+  useEffect(() => {
+    const generateQRCode = async () => {
+      try {
+        const configText = generateWireGuardConfig();
+        const qrUrl = await QRCode.toDataURL(configText, {
+          errorCorrectionLevel: 'M',
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        setQrCodeUrl(qrUrl);
+      } catch (error) {
+        console.error('Error generating QR code:', error);
+        setQrCodeUrl('');
+      }
+    };
+
+    generateQRCode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editedConfig, settings]);
 
   const handleSave = () => {
     setIsSaving(true);
@@ -407,13 +433,39 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
         <div className="px-6 py-4 border-b border-gray-200">
           <h4 className="text-md font-medium text-gray-900">Generated Configuration</h4>
         </div>
-        <div className="px-6 py-4">
-          <textarea
-            value={generateWireGuardConfig()}
-            readOnly
-            className="w-full h-64 font-mono text-sm bg-gray-50 border border-gray-300 rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Configuration will be generated here..."
-          />
+        <div className="px-6 py-4 space-y-6">
+          {/* Configuration Text */}
+          <div>
+            <textarea
+              value={generateWireGuardConfig()}
+              readOnly
+              className="w-full h-64 font-mono text-sm bg-gray-50 border border-gray-300 rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Configuration will be generated here..."
+            />
+          </div>
+          
+          {/* QR Code */}
+          <div className="border-t border-gray-200 pt-6">
+            <div className="flex flex-col items-center space-y-3">
+              <h5 className="text-sm font-medium text-gray-700">QR Code</h5>
+              {qrCodeUrl ? (
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="WireGuard Configuration QR Code"
+                    className="w-64 h-64 object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-64 h-64 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-400 text-sm">Generating QR Code...</span>
+                </div>
+              )}
+              <p className="text-xs text-gray-500 text-center max-w-48">
+                Scan with your WireGuard mobile app to import this configuration
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
