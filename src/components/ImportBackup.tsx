@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { WireGuardConfig } from '../types/WireGuardConfig';
-import { Settings } from '../types/Settings';
+import React, {useState} from 'react';
+import {WireGuardConfig} from '../types/WireGuardConfig';
+import {Settings} from '../types/Settings';
 
 interface BackupData {
   configs: WireGuardConfig[];
@@ -13,7 +13,7 @@ interface ImportBackupProps {
   onCancel: () => void;
 }
 
-const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
+const ImportBackup: React.FC<ImportBackupProps> = ({onImport, onCancel}) => {
   const [error, setError] = useState<string>('');
   const [preview, setPreview] = useState<BackupData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,12 +40,12 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
       try {
         const content = event.target?.result as string;
         const data = JSON.parse(content) as BackupData;
-        
+
         // Validate the backup data structure
         if (!data.configs || !Array.isArray(data.configs)) {
           throw new Error('Invalid backup file: missing or invalid configs array');
         }
-        
+
         if (!data.settings || typeof data.settings !== 'object') {
           throw new Error('Invalid backup file: missing or invalid settings');
         }
@@ -79,7 +79,7 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
 
   const handleImport = () => {
     if (!preview) return;
-    
+
     onImport(preview.configs, preview.settings);
   };
 
@@ -91,7 +91,7 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
           Import configurations and settings from a backup file.
         </p>
       </div>
-      
+
       <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
         <div className="space-y-6">
           <div>
@@ -122,21 +122,24 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
           {preview && (
             <div className="bg-gray-50 p-4 rounded-md">
               <h4 className="text-sm font-medium text-gray-900 mb-3">Backup Preview</h4>
-              
+
               <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-gray-700">Configurations:</span>
                   <span className="ml-2 text-sm text-gray-600">{preview.configs.length} config(s)</span>
                 </div>
-                
+
                 <div>
                   <span className="text-sm font-medium text-gray-700">Settings:</span>
-                  <div className="ml-2 text-sm text-gray-600">
+                  <div className="ml-2 text-sm text-gray-600 space-y-1">
+                    <div>IPv4 CIDR: {preview.settings.IPv4CIDR || 'Not set'}</div>
+                    <div>IPv6 CIDR: {preview.settings.IPv6CIDR || 'Not set'}</div>
+                    <div>Listen Port: {preview.settings.listenPort || 'Not set'}</div>
                     <div>MTU: {preview.settings.mtu || 'Not set'}</div>
-                    <div>Default Persistent Keepalive: {preview.settings.persistentKeepalive || 'Not set'}</div>
+                    <div>Persistent Keepalive: {preview.settings.persistentKeepalive !== undefined ? `${preview.settings.persistentKeepalive} seconds` : 'Not set'}</div>
                   </div>
                 </div>
-                
+
                 {preview.backupDate && (
                   <div>
                     <span className="text-sm font-medium text-gray-700">Backup Date:</span>
