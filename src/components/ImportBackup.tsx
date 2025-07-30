@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { WireGuardConfig } from '../types/WireGuardConfig';
-import { SystemSettings } from '../types/SystemSettings';
+import { Settings } from '../types/Settings';
 
 interface BackupData {
   configs: WireGuardConfig[];
-  systemSettings: SystemSettings;
+  settings: Settings;
   backupDate?: string;
-  version?: string;
 }
 
 interface ImportBackupProps {
-  onImport: (configs: WireGuardConfig[], systemSettings: SystemSettings) => void;
+  onImport: (configs: WireGuardConfig[], settings: Settings) => void;
   onCancel: () => void;
 }
 
@@ -51,8 +50,8 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
           throw new Error('Invalid backup file: missing or invalid configs array');
         }
         
-        if (!data.systemSettings || typeof data.systemSettings !== 'object') {
-          throw new Error('Invalid backup file: missing or invalid system settings');
+        if (!data.settings || typeof data.settings !== 'object') {
+          throw new Error('Invalid backup file: missing or invalid settings');
         }
 
         // Convert date strings back to Date objects for configs
@@ -85,7 +84,7 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
   const handleImport = () => {
     if (!preview) return;
     
-    onImport(preview.configs, preview.systemSettings);
+    onImport(preview.configs, preview.settings);
   };
 
   return (
@@ -93,7 +92,7 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
       <div className="px-4 py-5 sm:px-6">
         <h3 className="text-lg leading-6 font-medium text-gray-900">Import Backup</h3>
         <p className="mt-1 max-w-2xl text-sm text-gray-500">
-          Import configurations and system settings from a backup file.
+          Import configurations and settings from a backup file.
         </p>
       </div>
       
@@ -135,10 +134,10 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
                 </div>
                 
                 <div>
-                  <span className="text-sm font-medium text-gray-700">System Settings:</span>
+                  <span className="text-sm font-medium text-gray-700">Settings:</span>
                   <div className="ml-2 text-sm text-gray-600">
-                    <div>MTU: {preview.systemSettings.mtu || 'Not set'}</div>
-                    <div>Default Persistent Keepalive: {preview.systemSettings.defaultPersistentKeepalive || 'Not set'}</div>
+                    <div>MTU: {preview.settings.mtu || 'Not set'}</div>
+                    <div>Default Persistent Keepalive: {preview.settings.defaultPersistentKeepalive || 'Not set'}</div>
                   </div>
                 </div>
                 
@@ -148,13 +147,6 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
                     <span className="ml-2 text-sm text-gray-600">
                       {new Date(preview.backupDate).toLocaleString()}
                     </span>
-                  </div>
-                )}
-                
-                {preview.version && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Version:</span>
-                    <span className="ml-2 text-sm text-gray-600">{preview.version}</span>
                   </div>
                 )}
               </div>
@@ -168,7 +160,7 @@ const ImportBackup: React.FC<ImportBackupProps> = ({ onImport, onCancel }) => {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-yellow-800">
-                      <strong>Warning:</strong> Importing this backup will replace all existing configurations and system settings.
+                      <strong>Warning:</strong> Importing this backup will replace all existing configurations and settings.
                     </p>
                   </div>
                 </div>

@@ -1,40 +1,39 @@
-import { useConfig } from '../contexts/ConfigContext';
-import { WireGuardConfig } from '../types/WireGuardConfig';
-import { SystemSettings } from '../types/SystemSettings';
-import { View } from './useNavigation';
+import {useConfig} from '../contexts/ConfigContext';
+import {WireGuardConfig} from '../types/WireGuardConfig';
+import {Settings} from '../types/Settings';
+import {View} from './useNavigation';
 
 export const useConfigActions = (navigateToView: (view: View, configId?: string) => void) => {
-  const { 
-    configs, 
-    addConfig, 
-    updateConfig, 
-    deleteConfig, 
-    replaceAllConfigs, 
-    systemSettings, 
-    updateSystemSettings 
+  const {
+    configs,
+    addConfig,
+    updateConfig,
+    deleteConfig,
+    replaceAllConfigs,
+    settings,
+    updateSettings
   } = useConfig();
 
-  // Handle backing up all configurations and system settings as JSON
+  // Handle backing up all configurations and settings as JSON
   const handleBackup = () => {
-    if (configs.length === 0 && !systemSettings) {
-      alert('No configurations or system settings to backup');
+    if (configs.length === 0 && !settings) {
+      alert('No configurations or settings to backup');
       return;
     }
-    
-    // Create backup object with configs and system settings
+
+    // Create backup object with configs and settings
     const backupData = {
-      configs: configs,
-      systemSettings: systemSettings,
       backupDate: new Date().toISOString(),
-      version: '1.0'
+      settings: settings,
+      configs: configs
     };
-    
+
     // Create a blob and download it
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `wireguard-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `wiregen-backup-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -62,18 +61,18 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
   };
 
   // Handle the imported backup
-  const handleBackupImported = (configs: WireGuardConfig[], systemSettings: SystemSettings) => {
-    // Replace all existing configs and system settings
+  const handleBackupImported = (configs: WireGuardConfig[], settings: Settings) => {
+    // Replace all existing configs and settings
     replaceAllConfigs(configs);
-    updateSystemSettings(systemSettings);
+    updateSettings(settings);
     navigateToView(View.LIST);
   };
 
-  // Handle system settings
-  const handleSystemSettings = () => {
+  // Handle settings
+  const handleSettings = () => {
     navigateToView(View.SETTINGS);
   };
-  
+
   // Handle the imported config
   const handleConfigImported = (config: WireGuardConfig) => {
     addConfig(config);
@@ -108,44 +107,44 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     let content = '[Interface]\n';
     content += `PrivateKey = ${config.interface.privateKey}\n`;
     content += config.interface.address.map(addr => `Address = ${addr}\n`).join('');
-    
+
     if (config.interface.listenPort) {
       content += `ListenPort = ${config.interface.listenPort}\n`;
     }
-    
+
     if (config.interface.dns && config.interface.dns.length > 0) {
       content += `DNS = ${config.interface.dns.join(', ')}\n`;
     }
-    
-    // Add MTU from individual config or system settings
-    const mtu = config.interface.mtu || systemSettings.mtu;
+
+    // Add MTU from individual config or settings
+    const mtu = config.interface.mtu || settings.mtu;
     if (mtu) {
       content += `MTU = ${mtu}\n`;
     }
-    
+
     config.peers.forEach(peer => {
       content += '\n[Peer]\n';
       content += `PublicKey = ${peer.publicKey}\n`;
       content += peer.allowedIPs.map(ip => `AllowedIPs = ${ip}\n`).join('');
-      
+
       if (peer.endpoint) {
         content += `Endpoint = ${peer.endpoint}\n`;
       }
-      
-      // Add persistent keepalive from individual peer or system settings
-      const persistentKeepalive = peer.persistentKeepalive !== undefined 
-        ? peer.persistentKeepalive 
-        : systemSettings.defaultPersistentKeepalive;
-      
+
+      // Add persistent keepalive from individual peer or settings
+      const persistentKeepalive = peer.persistentKeepalive !== undefined
+        ? peer.persistentKeepalive
+        : settings.defaultPersistentKeepalive;
+
       if (persistentKeepalive !== undefined && persistentKeepalive > 0) {
         content += `PersistentKeepalive = ${persistentKeepalive}\n`;
       }
-      
+
       if (peer.presharedKey) {
         content += `PresharedKey = ${peer.presharedKey}\n`;
       }
     });
-    
+
     return content;
   };
 
@@ -153,9 +152,9 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
   const handleExportConfig = (config: WireGuardConfig) => {
     // Create WireGuard config file content
     const content = generateWireGuardConfig(config);
-    
+
     // Create a blob and download it
-    const blob = new Blob([content], { type: 'text/plain' });
+    const blob = new Blob([content], {type: 'text/plain'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -168,14 +167,14 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
   return {
     configs,
-    systemSettings,
+    settings,
     handleBackup,
     handleSelectConfig,
     handleAddConfig,
     handleImportConfig,
     handleRestore,
     handleBackupImported,
-    handleSystemSettings,
+    handleSettings,
     handleConfigImported,
     handleEditConfig,
     handleDeleteConfig,

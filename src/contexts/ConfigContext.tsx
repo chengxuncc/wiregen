@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { WireGuardConfig } from '../types/WireGuardConfig';
-import { SystemSettings, DEFAULT_SYSTEM_SETTINGS } from '../types/SystemSettings';
+import { Settings, DEFAULT_SETTINGS } from '../types/Settings';
 
 interface ConfigContextType {
   configs: WireGuardConfig[];
@@ -9,8 +9,8 @@ interface ConfigContextType {
   deleteConfig: (id: string) => void;
   replaceAllConfigs: (configs: WireGuardConfig[]) => void;
   getConfig: (id: string) => WireGuardConfig | undefined;
-  systemSettings: SystemSettings;
-  updateSystemSettings: (settings: SystemSettings) => void;
+  settings: Settings;
+  updateSettings: (settings: Settings) => void;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -21,7 +21,7 @@ interface ConfigProviderProps {
 
 export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
   const [configs, setConfigs] = useState<WireGuardConfig[]>([]);
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Check if localStorage is available
@@ -36,7 +36,7 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     }
   };
 
-  // Load configs and system settings from localStorage on initial render
+  // Load configs and settings from localStorage on initial render
   useEffect(() => {
     if (!isLocalStorageAvailable()) {
       console.warn('localStorage is not available. Configurations will not persist.');
@@ -57,13 +57,13 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         setConfigs(parsedConfigs);
       }
 
-      const savedSystemSettings = localStorage.getItem('wireguardSystemSettings');
-      if (savedSystemSettings) {
-        const parsedSettings = JSON.parse(savedSystemSettings);
-        setSystemSettings({ ...DEFAULT_SYSTEM_SETTINGS, ...parsedSettings });
+      const savedSettings = localStorage.getItem('wireguardSettings');
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
       }
     } catch (error) {
-      console.error('Failed to load saved configs or system settings:', error);
+      console.error('Failed to load saved configs or settings:', error);
     } finally {
       setIsInitialized(true);
     }
@@ -83,18 +83,18 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     }
   }, [configs, isInitialized]);
 
-  // Save system settings to localStorage whenever they change (but not on initial load)
+  // Save settings to localStorage whenever they change (but not on initial load)
   useEffect(() => {
     if (!isInitialized || !isLocalStorageAvailable()) {
       return;
     }
 
     try {
-      localStorage.setItem('wireguardSystemSettings', JSON.stringify(systemSettings));
+      localStorage.setItem('wireguardSettings', JSON.stringify(settings));
     } catch (error) {
-      console.error('Failed to save system settings to localStorage:', error);
+      console.error('Failed to save settings to localStorage:', error);
     }
-  }, [systemSettings, isInitialized]);
+  }, [settings, isInitialized]);
 
   const addConfig = (config: WireGuardConfig) => {
     setConfigs(prev => [...prev, config]);
@@ -116,8 +116,8 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     return configs.find(c => c.id === id);
   };
 
-  const updateSystemSettings = (settings: SystemSettings) => {
-    setSystemSettings(settings);
+  const updateSettings = (settings: Settings) => {
+    setSettings(settings);
   };
 
   return (
@@ -127,9 +127,9 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
       updateConfig, 
       deleteConfig, 
       replaceAllConfigs,
-      getConfig, 
-      systemSettings, 
-      updateSystemSettings 
+      getConfig,
+      settings,
+      updateSettings
     }}>
       {children}
     </ConfigContext.Provider>

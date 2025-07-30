@@ -11,14 +11,14 @@ const AppContent: React.FC = () => {
   const {currentView, selectedConfigId, navigateToView, View} = useNavigation();
   const {
     configs,
-    systemSettings,
+    settings,
     handleBackup,
     handleSelectConfig,
     handleAddConfig,
     handleImportConfig,
     handleRestore,
     handleBackupImported,
-    handleSystemSettings,
+    handleSettings,
     handleConfigImported,
     handleEditConfig,
     handleDeleteConfig,
@@ -40,7 +40,7 @@ const AppContent: React.FC = () => {
 
   return (
     <Layout
-      onSettings={handleSystemSettings}
+      onSettings={handleSettings}
       onBackup={handleBackup}
       onRestore={handleRestore}
       onHome={handleHome}
@@ -50,7 +50,7 @@ const AppContent: React.FC = () => {
         currentView={currentView}
         selectedConfigId={selectedConfigId}
         configs={configs}
-        systemSettings={systemSettings}
+        settings={settings}
         onSelect={handleSelectConfig}
         onAdd={handleAddConfig}
         onImport={handleImportConfig}

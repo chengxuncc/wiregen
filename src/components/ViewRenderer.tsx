@@ -5,13 +5,13 @@ import ConfigList from './ConfigList';
 import ConfigDetail from './ConfigDetail';
 import ImportConfig from './ImportConfig';
 import ImportBackup from './ImportBackup';
-import SystemSettings from './SystemSettings';
+import Settings from './Settings';
 
 interface ViewRendererProps {
   currentView: View;
   selectedConfigId?: string;
   configs: WireGuardConfig[];
-  systemSettings: any;
+  settings: any;
   onSelect: (config: WireGuardConfig) => void;
   onAdd: () => void;
   onImport: () => void;
@@ -21,7 +21,7 @@ interface ViewRendererProps {
   onSave: (config: WireGuardConfig) => void;
   onBack: () => void;
   onConfigImported: (config: WireGuardConfig) => void;
-  onBackupImported: (configs: WireGuardConfig[], systemSettings: any) => void;
+  onBackupImported: (configs: WireGuardConfig[], settings: any) => void;
   onCancel: () => void;
 }
 
@@ -29,7 +29,7 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
   currentView,
   selectedConfigId,
   configs,
-  systemSettings,
+  settings,
   onSelect,
   onAdd,
   onImport,
@@ -61,7 +61,7 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
       return (
         <ConfigDetail
           config={selectedConfig}
-          systemSettings={systemSettings}
+          settings={settings}
           onSave={onSave}
           onDelete={selectedConfig ? () => onDelete(selectedConfig.id) : undefined}
           onBack={onBack}
@@ -87,7 +87,7 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
 
     case View.SETTINGS:
       return (
-        <SystemSettings
+        <Settings
           onBack={onBack}
         />
       );

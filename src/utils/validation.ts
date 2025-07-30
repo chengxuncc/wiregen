@@ -37,10 +37,39 @@ export const validateCIDR = (cidr: string): string[] => {
     return errors;
   }
 
-  const cidrRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+  const ipv4CidrRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+  const ipv6CidrRegex = /^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/;
   
-  if (!cidrRegex.test(cidr)) {
-    errors.push('Invalid CIDR format (e.g., 192.168.1.0/24)');
+  if (!ipv4CidrRegex.test(cidr) && !ipv6CidrRegex.test(cidr)) {
+    errors.push('Invalid CIDR format (e.g., 192.168.1.0/24 or fd00::/64)');
+  }
+  
+  return errors;
+};
+
+export const validateIPv4CIDR = (cidr: string): string[] => {
+  const errors: string[] = [];
+  
+  if (!cidr) return errors; // Optional field
+  
+  const ipv4CidrRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+  
+  if (!ipv4CidrRegex.test(cidr)) {
+    errors.push('Invalid IPv4 CIDR format (e.g., 192.168.1.0/24)');
+  }
+  
+  return errors;
+};
+
+export const validateIPv6CIDR = (cidr: string): string[] => {
+  const errors: string[] = [];
+  
+  if (!cidr) return errors; // Optional field
+  
+  const ipv6CidrRegex = /^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/;
+  
+  if (!ipv6CidrRegex.test(cidr)) {
+    errors.push('Invalid IPv6 CIDR format (e.g., fd00::/64)');
   }
   
   return errors;

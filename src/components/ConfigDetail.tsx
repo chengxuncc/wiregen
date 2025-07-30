@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {WireGuardConfig} from '../types/WireGuardConfig';
-import {SystemSettings} from '../types/SystemSettings';
+import {Settings} from '../types/Settings';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
-  systemSettings: SystemSettings;
+  settings: Settings;
   onSave: (config: WireGuardConfig) => void;
   onDelete?: () => void;
   onBack: () => void;
@@ -75,7 +75,7 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
   </div>
 );
 
-const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSave, onDelete, onBack, onCancel}) => {
+const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, onDelete, onBack, onCancel}) => {
   // Create empty config for new configurations
   const createEmptyConfig = (): WireGuardConfig => ({
     id: uuidv4(),
@@ -209,7 +209,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSa
       content += `DNS = ${editedConfig.interface.dns.join(', ')}\n`;
     }
 
-    const mtu = editedConfig.interface.mtu || systemSettings.mtu;
+    const mtu = editedConfig.interface.mtu || settings.mtu;
     if (mtu) {
       content += `MTU = ${mtu}\n`;
     }
@@ -225,7 +225,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, systemSettings, onSa
 
       const persistentKeepalive = peer.persistentKeepalive !== undefined
         ? peer.persistentKeepalive
-        : systemSettings.defaultPersistentKeepalive;
+        : settings.defaultPersistentKeepalive;
 
       if (persistentKeepalive !== undefined && persistentKeepalive > 0) {
         content += `PersistentKeepalive = ${persistentKeepalive}\n`;
