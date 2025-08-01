@@ -4,8 +4,7 @@ import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
 import {useConfig} from '../contexts/ConfigContext';
-import { Buffer } from 'buffer';
-import { webcrypto as crypto } from 'crypto';
+import {getPublicKey} from '../utils/wireguard';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
@@ -98,38 +97,6 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
   </div>
 );
 
-function getWireGuardPublicKey(privateKeyBase64: string): Promise<string> {
-  // WireGuard uses Curve25519, not Ed25519, but Node.js crypto supports X25519 for key agreement
-  // and Ed25519 for signatures. For WireGuard, use X25519 keys.
-  // The private key is a 32-byte base64 string.
-  try {
-    const privateKeyRaw = Buffer.from(privateKeyBase64, 'base64');
-    if (privateKeyRaw.length !== 32) return Promise.resolve('');
-    return crypto.subtle.importKey(
-      'raw',
-      privateKeyRaw,
-      { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' },
-      false,
-      ['sign']
-    ).then(privateKey =>
-      crypto.subtle.exportKey('raw', privateKey)
-    ).then(() =>
-      crypto.subtle.importKey(
-        'raw',
-        privateKeyRaw,
-        { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' },
-        false,
-        ['verify']
-      )
-    ).then(publicKey =>
-      crypto.subtle.exportKey('raw', publicKey)
-    ).then((publicKeyRaw: ArrayBuffer) =>
-      Buffer.from(publicKeyRaw).toString('base64')
-    ).catch(() => '')
-  } catch {
-    return Promise.resolve('');
-  }
-}
 
 const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, onDelete, onBack, onCancel}) => {
   const configContext = useConfig();
@@ -189,7 +156,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
 
   useEffect(() => {
     if (editedConfig.interface.privateKey) {
-      getWireGuardPublicKey(editedConfig.interface.privateKey).then(setPublicKey);
+      setPublicKey(getPublicKey(editedConfig.interface.privateKey));
     } else {
       setPublicKey('');
     }
@@ -309,6 +276,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const generateWireGuardConfig = (): string => {
     let content = '[Interface]\n';
     content += `PrivateKey = ${editedConfig.interface.privateKey}\n`;
+    content += `# PublicKey = ${publicKey}\n`;
     content += editedConfig.interface.address.map(addr => `Address = ${addr}\n`).join('');
 
     if (editedConfig.interface.listenPort) {
@@ -428,13 +396,13 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               onChange={(value) => updateInterface({privateKey: value})}
               placeholder="Enter private key"
             />
-            <div className="sm:col-span-2">
+            <div className="sm:grid-cols-2">
               <div className="text-xs text-gray-500 mb-1">Public Key</div>
               <input
                 type="text"
                 value={publicKey}
                 readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-700 cursor-not-allowed"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-700"
                 placeholder="Public key will be generated from private key"
               />
             </div>
