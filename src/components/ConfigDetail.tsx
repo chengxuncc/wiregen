@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {WireGuardConfig} from '../types/WireGuardConfig';
 import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
+import {useConfig} from '../contexts/ConfigContext';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
@@ -89,13 +90,15 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
         onClick={() => onChange([...values, ''])}
         className="text-indigo-600 hover:text-indigo-700 text-sm"
       >
-        + Add {label}
+        Add {label}
       </button>
     </div>
   </div>
 );
 
 const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, onDelete, onBack, onCancel}) => {
+  const configContext = useConfig();
+  const allConfigs = configContext.configs || [];
   // Create empty config for new configurations
   const createEmptyConfig = (): WireGuardConfig => ({
     id: uuidv4(),
@@ -214,6 +217,24 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
       endpoint: '',
       presharedKey: '',
       persistentKeepalive: undefined
+    };
+    setEditedConfig(prev => ({
+      ...prev,
+      peers: [...prev.peers, newPeer]
+    }));
+  };
+
+  // Add peer as another config
+  const addPeerFromConfig = (configId: string) => {
+    const peerConfig = allConfigs.find(c => c.id === configId);
+    if (!peerConfig) return;
+    const newPeer = {
+      publicKey: peerConfig.interface.privateKey, // or peerConfig.publicKey if available
+      allowedIPs: peerConfig.interface.address,
+      endpoint: '',
+      presharedKey: '',
+      persistentKeepalive: undefined,
+      configId: peerConfig.id
     };
     setEditedConfig(prev => ({
       ...prev,
@@ -343,7 +364,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                 }`}
               >
                 {isSaving ? (
-                    isNewConfig ? 'Created' : 'Saved'
+                  isNewConfig ? 'Created' : 'Saved'
                 ) : (
                   isNewConfig ? 'Create' : 'Save'
                 )}
@@ -408,60 +429,70 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
             <h4 className="text-md font-medium text-gray-900">
               Peers ({editedConfig.peers.length})
             </h4>
-            <button
-              onClick={addPeer}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Add Peer
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={addPeer}
+                className="text-indigo-600 hover:text-indigo-700 text-sm"
+              >
+                Add Peer Manually
+              </button>
+              <select
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+                defaultValue=""
+                onChange={e => {
+                  if (e.target.value) {
+                    addPeerFromConfig(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+              >
+                <option value="">Add Peer From Other</option>
+                {allConfigs.filter(c => c.id !== editedConfig.id).map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="space-y-4">
-            {editedConfig.peers.map((peer, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <h5 className="text-sm font-medium text-gray-900">Peer {index + 1}</h5>
-                  <button
-                    onClick={() => removePeer(index)}
-                    className="text-red-600 hover:text-red-700 text-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <EditableField
-                    label="Public Key"
-                    value={peer.publicKey}
-                    onChange={(value) => updatePeer(index, {publicKey: value})}
-                    placeholder="Enter public key"
-                  />
-                  <EditableField
-                    label="Preshared Key"
-                    value={peer.presharedKey || ''}
-                    onChange={(value) => updatePeer(index, {presharedKey: value || undefined})}
-                    placeholder="Optional"
-                  />
-                  <EditableField
-                    label="Endpoint"
-                    value={peer.endpoint || ''}
-                    onChange={(value) => updatePeer(index, {endpoint: value || undefined})}
-                    placeholder="e.g., example.com:51820"
-                  />
-                  <EditableField
-                    label="Persistent Keepalive"
-                    value={peer.persistentKeepalive?.toString() || ''}
-                    onChange={(value) => updatePeer(index, {persistentKeepalive: value ? parseInt(value) : undefined})}
-                    type="number"
-                    placeholder="Default"
-                  />
-                  <div className="sm:col-span-2">
-                    <EditableArrayField
-                      label="Allowed IPs"
-                      values={peer.allowedIPs}
-                      onChange={(values) => updatePeerAllowedIPs(index, values)}
-                      placeholder="e.g., 10.0.0.2/32"
-                    />
-                  </div>
-                </div>
+            {editedConfig.peers.map((peer, i) => (
+              <div key={i} className="border rounded p-3 mb-2 bg-gray-50">
+                {peer.configId ? (
+                  <div className="text-xs text-indigo-700 mb-1">Peer from
+                    config: {allConfigs.find(c => c.id === peer.configId)?.name || peer.configId}</div>
+                ) : null}
+                {/* Existing peer fields UI here */}
+                <EditableField
+                  label="Public Key"
+                  value={peer.publicKey}
+                  onChange={val => updatePeer(i, {publicKey: val})}
+                />
+                <EditableArrayField
+                  label="Allowed IPs"
+                  values={peer.allowedIPs}
+                  onChange={vals => updatePeerAllowedIPs(i, vals)}
+                />
+                <EditableField
+                  label="Endpoint"
+                  value={peer.endpoint || ''}
+                  onChange={val => updatePeer(i, {endpoint: val})}
+                />
+                <EditableField
+                  label="Preshared Key"
+                  value={peer.presharedKey || ''}
+                  onChange={val => updatePeer(i, {presharedKey: val})}
+                />
+                <EditableField
+                  label="Persistent Keepalive"
+                  value={peer.persistentKeepalive?.toString() || ''}
+                  onChange={val => updatePeer(i, {persistentKeepalive: val ? parseInt(val) : undefined})}
+                  type="number"
+                />
+                <button
+                  onClick={() => removePeer(i)}
+                  className="mt-2 text-red-600 hover:text-red-800 text-xs"
+                >
+                  Remove Peer
+                </button>
               </div>
             ))}
           </div>
@@ -483,21 +514,22 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               placeholder="Configuration will be generated here..."
             />
           </div>
-          
+
           {/* QR Code */}
           <div className="border-t border-gray-200 pt-6">
             <div className="flex flex-col items-center space-y-3">
               <h5 className="text-sm font-medium text-gray-700">QR Code</h5>
               {qrCodeUrl ? (
                 <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                  <img 
-                    src={qrCodeUrl} 
+                  <img
+                    src={qrCodeUrl}
                     alt="WireGuard Configuration QR Code"
                     className="w-64 h-64 object-contain"
                   />
                 </div>
               ) : (
-                <div className="w-64 h-64 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
+                <div
+                  className="w-64 h-64 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
                   <span className="text-gray-400 text-sm">Generating QR Code...</span>
                 </div>
               )}

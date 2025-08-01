@@ -6,6 +6,8 @@ export interface PeerConfig {
   endpoint?: string;
   persistentKeepalive?: number;
   presharedKey?: string;
+  // Optionally reference another config as a peer
+  configId?: string;
 }
 
 export interface InterfaceConfig {
