@@ -33,6 +33,25 @@ const EditableField = ({label, value, onChange, type = 'text', placeholder = '',
   </div>
 );
 
+const EditableTextAreaField = ({label, value, onChange, placeholder = '', className = ''}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}) => (
+  <div className={className}>
+    <div className="text-xs text-gray-500 mb-1">{label}</div>
+    <textarea
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[64px] resize-y"
+      rows={3}
+    />
+  </div>
+);
+
 const EditableArrayField = ({label, values, onChange, placeholder = 'Add new item'}: {
   label: string;
   values: string[];
@@ -262,6 +281,13 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
       }
     });
 
+    if (editedConfig.interface.postUp) {
+      content += `PostUp = ${editedConfig.interface.postUp.replace(/\r?\n/g, '; ')}\n`;
+    }
+    if (editedConfig.interface.postDown) {
+      content += `PostDown = ${editedConfig.interface.postDown.replace(/\r?\n/g, '; ')}\n`;
+    }
+
     return content;
   }
 
@@ -359,6 +385,20 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                 placeholder="e.g., 8.8.8.8"
               />
             </div>
+            <EditableTextAreaField
+              label="PostUp Script"
+              value={editedConfig.interface.postUp || ''}
+              onChange={(value) => updateInterface({postUp: value || undefined})}
+              placeholder="e.g., iptables ..."
+              className="sm:col-span-2"
+            />
+            <EditableTextAreaField
+              label="PostDown Script"
+              value={editedConfig.interface.postDown || ''}
+              onChange={(value) => updateInterface({postDown: value || undefined})}
+              placeholder="e.g., iptables ..."
+              className="sm:col-span-2"
+            />
           </div>
         </div>
 

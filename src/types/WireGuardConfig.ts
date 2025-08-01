@@ -14,6 +14,8 @@ export interface InterfaceConfig {
   listenPort?: number;
   dns?: string[];
   mtu?: number;
+  postUp?: string;
+  postDown?: string;
 }
 
 export interface WireGuardConfig {
