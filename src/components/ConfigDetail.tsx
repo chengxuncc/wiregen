@@ -240,7 +240,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     const peerConfig = allConfigs.find(c => c.id === configId);
     if (!peerConfig) return;
     const newPeer = {
-      publicKey: peerConfig.interface.privateKey, // or peerConfig.publicKey if available
+      publicKey: getPublicKey(peerConfig.interface.privateKey),
       allowedIPs: peerConfig.interface.address,
       endpoint: '',
       presharedKey: '',
