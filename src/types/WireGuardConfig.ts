@@ -12,10 +12,10 @@ export interface PeerConfig {
 
 export interface InterfaceConfig {
   privateKey: string;
-  address: string[];
   listenPort?: number;
+  endpoint?: string;
+  address: string[];
   dns?: string[];
-  mtu?: number;
   postUp?: string;
   postDown?: string;
 }

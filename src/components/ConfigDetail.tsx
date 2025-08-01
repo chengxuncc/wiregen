@@ -4,6 +4,8 @@ import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
 import {useConfig} from '../contexts/ConfigContext';
+import { Buffer } from 'buffer';
+import { webcrypto as crypto } from 'crypto';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
@@ -96,6 +98,39 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
   </div>
 );
 
+function getWireGuardPublicKey(privateKeyBase64: string): Promise<string> {
+  // WireGuard uses Curve25519, not Ed25519, but Node.js crypto supports X25519 for key agreement
+  // and Ed25519 for signatures. For WireGuard, use X25519 keys.
+  // The private key is a 32-byte base64 string.
+  try {
+    const privateKeyRaw = Buffer.from(privateKeyBase64, 'base64');
+    if (privateKeyRaw.length !== 32) return Promise.resolve('');
+    return crypto.subtle.importKey(
+      'raw',
+      privateKeyRaw,
+      { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' },
+      false,
+      ['sign']
+    ).then(privateKey =>
+      crypto.subtle.exportKey('raw', privateKey)
+    ).then(() =>
+      crypto.subtle.importKey(
+        'raw',
+        privateKeyRaw,
+        { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' },
+        false,
+        ['verify']
+      )
+    ).then(publicKey =>
+      crypto.subtle.exportKey('raw', publicKey)
+    ).then((publicKeyRaw: ArrayBuffer) =>
+      Buffer.from(publicKeyRaw).toString('base64')
+    ).catch(() => '')
+  } catch {
+    return Promise.resolve('');
+  }
+}
+
 const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, onDelete, onBack, onCancel}) => {
   const configContext = useConfig();
   const allConfigs = configContext.configs || [];
@@ -118,6 +153,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [publicKey, setPublicKey] = useState('');
   const isNewConfig = !config;
 
   // Update edited config when prop changes
@@ -150,6 +186,14 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     generateQRCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editedConfig, settings]);
+
+  useEffect(() => {
+    if (editedConfig.interface.privateKey) {
+      getWireGuardPublicKey(editedConfig.interface.privateKey).then(setPublicKey);
+    } else {
+      setPublicKey('');
+    }
+  }, [editedConfig.interface.privateKey]);
 
   const handleSave = () => {
     setIsSaving(true);
@@ -275,7 +319,8 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
       content += `DNS = ${editedConfig.interface.dns.join(', ')}\n`;
     }
 
-    const mtu = editedConfig.interface.mtu || settings.mtu;
+    // Remove interface MTU from config text, use only settings.mtu
+    const mtu = settings.mtu;
     if (mtu) {
       content += `MTU = ${mtu}\n`;
     }
@@ -382,6 +427,22 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               value={editedConfig.interface.privateKey}
               onChange={(value) => updateInterface({privateKey: value})}
               placeholder="Enter private key"
+            />
+            <div className="sm:col-span-2">
+              <div className="text-xs text-gray-500 mb-1">Public Key</div>
+              <input
+                type="text"
+                value={publicKey}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-700 cursor-not-allowed"
+                placeholder="Public key will be generated from private key"
+              />
+            </div>
+            <EditableField
+              label="Endpoint"
+              value={editedConfig.interface.endpoint || ''}
+              onChange={(value) => updateInterface({endpoint: value || undefined})}
+              placeholder="e.g., vpn.example.com:51820"
             />
             <EditableField
               label="Listen Port"

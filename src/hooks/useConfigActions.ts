@@ -118,8 +118,8 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
       content += `DNS = ${config.interface.dns.join(', ')}\n`;
     }
 
-    // Add MTU from individual config or settings
-    const mtu = config.interface.mtu || settings.mtu;
+    // Add MTU from settings only (interface.mtu removed)
+    const mtu = settings.mtu;
     if (mtu) {
       content += `MTU = ${mtu}\n`;
     }
