@@ -4,7 +4,7 @@ import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
 import {useConfig} from '../contexts/ConfigContext';
-import {getPublicKey} from '../utils/wireguard';
+import {getPublicKey, generatePrivateKey} from '../utils/wireguard';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
@@ -106,8 +106,8 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     id: uuidv4(),
     name: 'New Configuration',
     interface: {
-      privateKey: '',
-      address: [''],
+      privateKey: generatePrivateKey(), // Generate private key by default
+      address: [],
       listenPort: settings.listenPort ? settings.listenPort : DEFAULT_SETTINGS.listenPort,
       dns: [],
     },
@@ -390,12 +390,27 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
         <div className="px-6 py-4 border-b border-gray-200">
           <h4 className="text-md font-medium text-gray-900 mb-4">Interface</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <EditableField
-              label="Private Key"
-              value={editedConfig.interface.privateKey}
-              onChange={(value) => updateInterface({privateKey: value})}
-              placeholder="Enter private key"
-            />
+            <div className="relative">
+              <EditableField
+                label="Private Key"
+                value={editedConfig.interface.privateKey}
+                onChange={(value) => updateInterface({privateKey: value})}
+                placeholder="Enter private key"
+              />
+              <button
+                type="button"
+                onClick={() => updateInterface({privateKey: generatePrivateKey()})}
+                className="absolute top-6 right-2 p-1 text-gray-400 hover:text-indigo-600"
+                title="Generate new private key"
+                style={{background: 'none', border: 'none'}}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M21 2v6h-6"/>
+                  <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                  <path d="M3 22v-6h6"/>
+                  <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                </svg>
+              </button>
+            </div>
             <div className="sm:grid-cols-2">
               <div className="text-xs text-gray-500 mb-1">Public Key</div>
               <input

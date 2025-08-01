@@ -27,3 +27,20 @@ export function getPublicKey(privateKeyBase64: string): string {
   }
 }
 
+export function generatePrivateKey(): string {
+  // Generate a 32-byte random private key and return as base64
+  const array = new Uint8Array(32);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(array);
+  } else {
+    // fallback for environments without window.crypto
+    for (let i = 0; i < 32; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  let binary = '';
+  for (let i = 0; i < array.length; i++) {
+    binary += String.fromCharCode(array[i]);
+  }
+  return btoa(binary);
+}
