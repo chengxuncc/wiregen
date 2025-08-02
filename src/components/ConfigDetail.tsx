@@ -8,6 +8,7 @@ import {generatePrivateKey, getPublicKey} from '../utils/wireguard';
 import {
   validateCIDR,
   validateEndpoint,
+  validateIPAddress,
   validatePort,
   validatePresharedKey,
   validatePrivateKey,
@@ -206,7 +207,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const endpointError = validateEndpoint(editedConfig.interface.endpoint || '');
   const portError = validatePort(editedConfig.interface.listenPort);
   const addressErrors = editedConfig.interface.address?.map(validateCIDR);
-  const dnsErrors = editedConfig.interface.dns?.map(validateCIDR);
+  const dnsErrors = editedConfig.interface.dns?.map(validateIPAddress);
 
   // Save button enabled only if all required fields are valid
   const isFormValid =
@@ -515,7 +516,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                 label="DNS Servers"
                 values={editedConfig.interface.dns || []}
                 onChange={updateInterfaceDNS}
-                placeholder="e.g., 8.8.8.8"
+                placeholder="e.g., 1.1.1.1, 2606:4700:4700::1111"
                 errorMessages={dnsErrors}
               />
             </div>
