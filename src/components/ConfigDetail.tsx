@@ -305,9 +305,20 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const addPeerFromConfig = (configId: string) => {
     const peerConfig = configContext.configs[configId];
     if (!peerConfig) return;
+    // Map allowedIPs to /32 for IPv4 and /128 for IPv6
+    const mappedAllowedIPs = (peerConfig.interface.address || []).map(addr => {
+      if (addr.includes('.')) {
+        // IPv4
+        return addr.replace(/\/(\d+)$/, '/32');
+      } else if (addr.includes(':')) {
+        // IPv6
+        return addr.replace(/\/(\d+)$/, '/128');
+      }
+      return addr;
+    });
     const newPeer: PeerConfig = {
       publicKey: getPublicKey(peerConfig.interface.privateKey),
-      allowedIPs: peerConfig.interface.address,
+      allowedIPs: mappedAllowedIPs,
       endpoint: peerConfig.interface.endpoint,
       presharedKey: '',
       persistentKeepalive: settings.persistentKeepalive,

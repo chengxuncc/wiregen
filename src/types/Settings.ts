@@ -13,5 +13,5 @@ export const DEFAULT_SETTINGS: Settings = {
   IPv6CIDR: 'fd10::/64',
   mtu: 1380,
   listenPort: 51821,
-  persistentKeepalive: 15,
+  persistentKeepalive: undefined,
 };
