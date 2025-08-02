@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import {WireGuardConfig} from "../types/WireGuardConfig";
 
 export enum View {
   LIST = 'LIST',

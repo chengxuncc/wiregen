@@ -5,6 +5,7 @@ import ViewRenderer from './components/ViewRenderer';
 import {ConfigProvider} from './contexts/ConfigContext';
 import {useNavigation} from './hooks/useNavigation';
 import {useConfigActions} from './hooks/useConfigActions';
+import {WireGuardConfig} from "./types/WireGuardConfig";
 
 // Main App content
 const AppContent: React.FC = () => {
@@ -19,7 +20,6 @@ const AppContent: React.FC = () => {
     handleRestore,
     handleBackupImported,
     handleSettings,
-    handleConfigImported,
     handleEditConfig,
     handleDeleteConfig,
     handleSaveConfig,
@@ -27,16 +27,26 @@ const AppContent: React.FC = () => {
     handleReset
   } = useConfigActions(navigateToView);
 
+  const [importedConfig, setImportedConfig] = React.useState<WireGuardConfig | undefined>(undefined);
+
   const handleBack = () => {
     navigateToView(View.LIST);
+    setImportedConfig(undefined);
   };
 
   const handleHome = () => {
     navigateToView(View.LIST);
+    setImportedConfig(undefined);
   };
 
   const handleCancel = () => {
     navigateToView(View.LIST);
+    setImportedConfig(undefined);
+  };
+
+  const handleConfigImported = (config: WireGuardConfig) => {
+    setImportedConfig(config);
+    navigateToView(View.DETAIL);
   };
 
   return (
@@ -64,6 +74,7 @@ const AppContent: React.FC = () => {
         onConfigImported={handleConfigImported}
         onBackupImported={handleBackupImported}
         onCancel={handleCancel}
+        importedConfig={importedConfig}
       />
     </Layout>
   );

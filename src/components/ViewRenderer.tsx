@@ -23,6 +23,7 @@ interface ViewRendererProps {
   onConfigImported: (config: WireGuardConfig) => void;
   onBackupImported: (configs: { [id: string]: WireGuardConfig }, settings: any) => void;
   onCancel: () => void;
+  importedConfig?: WireGuardConfig;
 }
 
 const ViewRenderer: React.FC<ViewRendererProps> = ({
@@ -40,7 +41,8 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
   onBack,
   onConfigImported,
   onBackupImported,
-  onCancel
+  onCancel,
+  importedConfig
 }) => {
   const selectedConfig = selectedConfigId ? configs[selectedConfigId] : undefined;
 
@@ -60,7 +62,7 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
     case View.DETAIL:
       return (
         <ConfigDetail
-          config={selectedConfig}
+          config={selectedConfig ? selectedConfig : importedConfig}
           settings={settings}
           onSave={onSave}
           onDelete={selectedConfig ? () => onDelete(selectedConfig.id) : undefined}
@@ -107,4 +109,4 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
   }
 };
 
-export default ViewRenderer; 
+export default ViewRenderer;

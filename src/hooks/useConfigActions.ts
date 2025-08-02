@@ -75,12 +75,6 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     navigateToView(View.SETTINGS);
   };
 
-  // Handle the imported config
-  const handleConfigImported = (config: WireGuardConfig) => {
-    addConfig(config);
-    navigateToView(View.DETAIL, config.id);
-  };
-
   // Handle editing a config
   const handleEditConfig = (configId: string) => {
     navigateToView(View.DETAIL, configId);
@@ -138,7 +132,6 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     handleRestore,
     handleBackupImported,
     handleSettings,
-    handleConfigImported,
     handleEditConfig,
     handleDeleteConfig,
     handleSaveConfig,
