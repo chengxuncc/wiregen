@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import {WireGuardConfig} from "../types/WireGuardConfig";
+import {useEffect, useState} from 'react';
 
 export enum View {
   LIST = 'LIST',
@@ -32,17 +31,17 @@ export const useNavigation = () => {
     // Handle /config/:id pattern
     if (pathname.startsWith('/config/')) {
       const configId = pathname.substring(8); // Remove '/config/' prefix
-      return { view: View.DETAIL, configId };
+      return {view: View.DETAIL, configId};
     }
-    
+
     // Handle other paths
     const view = PATH_VIEWS[pathname] || View.LIST;
-    return { view, configId: undefined };
+    return {view, configId: undefined};
   };
 
   // Initialize view from current URL
   useEffect(() => {
-    const { view, configId } = parseUrl(window.location.pathname);
+    const {view, configId} = parseUrl(window.location.pathname);
     setCurrentView(view);
     setSelectedConfigId(configId);
   }, []);
@@ -50,7 +49,7 @@ export const useNavigation = () => {
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
-      const { view, configId } = parseUrl(window.location.pathname);
+      const {view, configId} = parseUrl(window.location.pathname);
       setCurrentView(view);
       setSelectedConfigId(configId);
     };
@@ -63,7 +62,7 @@ export const useNavigation = () => {
   const navigateToView = (view: View, configId?: string) => {
     const basePath = VIEW_PATHS[view];
     let url: string;
-    
+
     if (view === View.DETAIL && configId) {
       url = `/config/${configId}`;
     } else {
@@ -71,9 +70,9 @@ export const useNavigation = () => {
     }
 
     if (window.location.pathname !== url) {
-      window.history.pushState({ view, configId }, '', url);
+      window.history.pushState({view, configId}, '', url);
     }
-    
+
     setCurrentView(view);
     setSelectedConfigId(configId);
   };
