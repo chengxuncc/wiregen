@@ -3,6 +3,7 @@ import {WireGuardConfig} from '../types/WireGuardConfig';
 import {Settings} from '../types/Settings';
 import {View} from './useNavigation';
 import {generateWireGuardConfig} from "../utils/wireguard";
+import {dateToLocalISO} from "../utils/common";
 
 export const useConfigActions = (navigateToView: (view: View, configId?: string) => void) => {
   const {
@@ -22,10 +23,11 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
       alert('No configurations or settings to backup');
       return;
     }
+    const now = dateToLocalISO(new Date());
 
     // Create backup object with configs and settings
     const backupData = {
-      backupDate: new Date().toISOString(),
+      backupDate: now,
       settings: settings,
       configs: configs
     };
@@ -35,7 +37,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `wiregen-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `wiregen-backup-${now.split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

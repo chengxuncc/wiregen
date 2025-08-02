@@ -154,8 +154,8 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     name: 'New Configuration',
     interface: {
       privateKey: generatePrivateKey(), // Generate private key by default
-      address: [],
       listenPort: settings.listenPort ? settings.listenPort : DEFAULT_SETTINGS.listenPort,
+      address: [],
       dns: [],
     },
     peers: [],
