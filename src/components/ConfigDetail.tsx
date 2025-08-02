@@ -4,7 +4,7 @@ import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
 import {useConfig} from '../contexts/ConfigContext';
-import {generatePrivateKey, getPublicKey} from '../utils/wireguard';
+import {generatePrivateKey, generateWireGuardConfig, getPublicKey} from '../utils/wireguard';
 import {
   validateCIDR,
   validateEndpoint,
@@ -178,7 +178,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   useEffect(() => {
     const generateQRCode = async () => {
       try {
-        const configText = generateWireGuardConfig();
+        const configText = generateWireGuardConfig(settings, editedConfig);
         const qrUrl = await QRCode.toDataURL(configText, {
           errorCorrectionLevel: 'M',
           margin: 1,
@@ -348,59 +348,6 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const updateInterfaceDNS = (dns: string[]) => {
     updateInterface({dns});
   };
-
-  // Generate WireGuard config text - memoized to prevent re-computation on every render
-  const generateWireGuardConfig = (): string => {
-    let content = '[Interface]\n';
-    content += `PrivateKey = ${editedConfig.interface.privateKey}\n`;
-    content += `# PublicKey = ${publicKey}\n`;
-    if (editedConfig.interface.address && editedConfig.interface.address.length > 0) {
-      content += `Address = ${editedConfig.interface.address.join(', ')}\n`;
-    }
-
-    if (editedConfig.interface.listenPort) {
-      content += `ListenPort = ${editedConfig.interface.listenPort}\n`;
-    }
-
-    if (editedConfig.interface.dns && editedConfig.interface.dns.length > 0) {
-      content += `DNS = ${editedConfig.interface.dns.join(', ')}\n`;
-    }
-
-    // Remove interface MTU from config text, use only settings.mtu
-    const mtu = settings.mtu;
-    if (mtu) {
-      content += `MTU = ${mtu}\n`;
-    }
-
-    editedConfig.peers.forEach(peer => {
-      content += '\n[Peer]\n';
-      content += `PublicKey = ${peer.publicKey}\n`;
-      if (peer.allowedIPs && peer.allowedIPs.length > 0) {
-        content += `AllowedIPs = ${peer.allowedIPs.join(', ')}\n`;
-      }
-
-      if (peer.endpoint) {
-        content += `Endpoint = ${peer.endpoint}\n`;
-      }
-
-      if (peer.persistentKeepalive !== undefined && peer.persistentKeepalive > 0) {
-        content += `PersistentKeepalive = ${peer.persistentKeepalive}\n`;
-      }
-
-      if (peer.presharedKey) {
-        content += `PresharedKey = ${peer.presharedKey}\n`;
-      }
-    });
-
-    if (editedConfig.interface.postUp) {
-      content += `PostUp = ${editedConfig.interface.postUp.replace(/\r?\n/g, '; ')}\n`;
-    }
-    if (editedConfig.interface.postDown) {
-      content += `PostDown = ${editedConfig.interface.postDown.replace(/\r?\n/g, '; ')}\n`;
-    }
-
-    return content;
-  }
 
   return (
     <div className="space-y-6">
@@ -708,7 +655,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
           {/* Configuration Text */}
           <div>
             <textarea
-              value={generateWireGuardConfig()}
+              value={generateWireGuardConfig(settings, editedConfig)}
               readOnly
               className="w-full h-64 font-mono text-sm bg-gray-50 border border-gray-300 rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Configuration will be generated here..."

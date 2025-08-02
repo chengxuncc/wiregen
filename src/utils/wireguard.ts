@@ -1,5 +1,7 @@
 // Utility functions for WireGuard key handling
-import { x25519 } from '@noble/curves/ed25519';
+import {x25519} from '@noble/curves/ed25519';
+import {WireGuardConfig} from "../types/WireGuardConfig";
+import {Settings} from "../types/Settings";
 
 export function base64ToUint8Array(base64: string): Uint8Array {
   const binary = atob(base64);
@@ -43,4 +45,56 @@ export function generatePrivateKey(): string {
     binary += String.fromCharCode(array[i]);
   }
   return btoa(binary);
+}
+
+export function generateWireGuardConfig(settings: Settings, config: WireGuardConfig): string {
+  let content = '[Interface]\n';
+  content += `PrivateKey = ${config.interface.privateKey}\n`;
+  content += `# PublicKey = ${getPublicKey(config.interface.privateKey)}\n`;
+  if (config.interface.address && config.interface.address.length > 0) {
+    content += `Address = ${config.interface.address.join(', ')}\n`;
+  }
+
+  if (config.interface.listenPort) {
+    content += `ListenPort = ${config.interface.listenPort}\n`;
+  }
+
+  if (config.interface.dns && config.interface.dns.length > 0) {
+    content += `DNS = ${config.interface.dns.join(', ')}\n`;
+  }
+
+  // Remove interface MTU from config text, use only settings.mtu
+  const mtu = settings.mtu;
+  if (mtu) {
+    content += `MTU = ${mtu}\n`;
+  }
+
+  config.peers.forEach(peer => {
+    content += '\n[Peer]\n';
+    content += `PublicKey = ${peer.publicKey}\n`;
+    if (peer.allowedIPs && peer.allowedIPs.length > 0) {
+      content += `AllowedIPs = ${peer.allowedIPs.join(', ')}\n`;
+    }
+
+    if (peer.endpoint) {
+      content += `Endpoint = ${peer.endpoint}\n`;
+    }
+
+    if (peer.persistentKeepalive !== undefined && peer.persistentKeepalive > 0) {
+      content += `PersistentKeepalive = ${peer.persistentKeepalive}\n`;
+    }
+
+    if (peer.presharedKey) {
+      content += `PresharedKey = ${peer.presharedKey}\n`;
+    }
+  });
+
+  if (config.interface.postUp) {
+    content += `PostUp = ${config.interface.postUp.replace(/\r?\n/g, '; ')}\n`;
+  }
+  if (config.interface.postDown) {
+    content += `PostDown = ${config.interface.postDown.replace(/\r?\n/g, '; ')}\n`;
+  }
+
+  return content;
 }

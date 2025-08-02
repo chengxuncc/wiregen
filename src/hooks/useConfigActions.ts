@@ -2,6 +2,7 @@ import {useConfig} from '../contexts/ConfigContext';
 import {WireGuardConfig} from '../types/WireGuardConfig';
 import {Settings} from '../types/Settings';
 import {View} from './useNavigation';
+import {generateWireGuardConfig} from "../utils/wireguard";
 
 export const useConfigActions = (navigateToView: (view: View, configId?: string) => void) => {
   const {
@@ -104,56 +105,10 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     }
   };
 
-  // Generate WireGuard config file content
-  const generateWireGuardConfig = (config: WireGuardConfig): string => {
-    let content = '[Interface]\n';
-    content += `PrivateKey = ${config.interface.privateKey}\n`;
-    content += config.interface.address.map(addr => `Address = ${addr}\n`).join('');
-
-    if (config.interface.listenPort) {
-      content += `ListenPort = ${config.interface.listenPort}\n`;
-    }
-
-    if (config.interface.dns && config.interface.dns.length > 0) {
-      content += `DNS = ${config.interface.dns.join(', ')}\n`;
-    }
-
-    // Add MTU from settings only (interface.mtu removed)
-    const mtu = settings.mtu;
-    if (mtu) {
-      content += `MTU = ${mtu}\n`;
-    }
-
-    config.peers.forEach(peer => {
-      content += '\n[Peer]\n';
-      content += `PublicKey = ${peer.publicKey}\n`;
-      content += peer.allowedIPs.map(ip => `AllowedIPs = ${ip}\n`).join('');
-
-      if (peer.endpoint) {
-        content += `Endpoint = ${peer.endpoint}\n`;
-      }
-
-      // Add persistent keepalive from individual peer or settings
-      const persistentKeepalive = peer.persistentKeepalive !== undefined
-        ? peer.persistentKeepalive
-        : settings.persistentKeepalive;
-
-      if (persistentKeepalive !== undefined && persistentKeepalive > 0) {
-        content += `PersistentKeepalive = ${persistentKeepalive}\n`;
-      }
-
-      if (peer.presharedKey) {
-        content += `PresharedKey = ${peer.presharedKey}\n`;
-      }
-    });
-
-    return content;
-  };
-
   // Handle exporting a config
   const handleExportConfig = (config: WireGuardConfig) => {
     // Create WireGuard config file content
-    const content = generateWireGuardConfig(config);
+    const content = generateWireGuardConfig(settings, config);
 
     // Create a blob and download it
     const blob = new Blob([content], {type: 'text/plain'});
@@ -188,7 +143,6 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     handleDeleteConfig,
     handleSaveConfig,
     handleExportConfig,
-    handleReset,
-    generateWireGuardConfig
+    handleReset
   };
 };
