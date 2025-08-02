@@ -1,13 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { WireGuardConfig, InterfaceConfig, PeerConfig } from '../types/WireGuardConfig';
+import React, {useRef, useState} from 'react';
+import {v4 as uuidv4} from 'uuid';
+import {InterfaceConfig, PeerConfig, WireGuardConfig} from '../types/WireGuardConfig';
 
 interface ImportConfigProps {
   onImport: (config: WireGuardConfig) => void;
   onCancel: () => void;
 }
 
-const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
+const ImportConfig: React.FC<ImportConfigProps> = ({onImport, onCancel}) => {
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,10 +15,10 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     setFileName(file.name);
     setError(null);
-    
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
@@ -45,25 +45,35 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
   const parseWireGuardConfig = (content: string, configName: string): WireGuardConfig => {
     const lines = content.split('\n').map(line => line.trim());
     let currentSection: 'interface' | 'peer' | null = null;
-    
+
     const interfaceConfig: InterfaceConfig = {
       privateKey: '',
       address: [],
       listenPort: undefined,
       dns: [],
     };
-    
+
     const peers: PeerConfig[] = [];
     let currentPeer: PeerConfig | null = null;
-    
+
     for (const line of lines) {
-      if (line === '' || line.startsWith('#')) continue;
-      
+      if (line === '') continue;
+      if (line.startsWith('#') && currentSection === 'interface' && line.includes('=')) {
+        const i = line.indexOf('=');
+        const key = line.slice(1, i).trim();
+        const value = line.slice(i + 1).trim();
+        switch (key.toLowerCase()) {
+          case 'endpoint':
+            interfaceConfig.endpoint = value;
+            break;
+        }
+      }
+
       if (line === '[Interface]') {
         currentSection = 'interface';
         continue;
       }
-      
+
       if (line === '[Peer]') {
         currentSection = 'peer';
         if (currentPeer) {
@@ -78,26 +88,27 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
         };
         continue;
       }
-      
+
       if (!currentSection) {
         if (line.includes('=')) {
           throw new Error(`Configuration line "${line}" found outside of [Interface] or [Peer] section`);
         }
         continue;
       }
-      
+
       if (!line.includes('=')) {
         throw new Error(`Invalid configuration line: "${line}". Expected format: Key = Value`);
       }
-      
-      const [key, value] = line.split('=').map(part => part.trim());
+      const i = line.indexOf('=');
+      const key = line.slice(0, i).trim();
+      const value = line.slice(i + 1).trim();
       if (currentSection === 'interface') {
         switch (key.toLowerCase()) {
           case 'privatekey':
             interfaceConfig.privateKey = value;
             break;
           case 'address':
-            interfaceConfig.address.push(value);
+            interfaceConfig.address = value.split(',').map(addr => addr.trim());
             break;
           case 'listenport':
             interfaceConfig.listenPort = parseInt(value);
@@ -108,6 +119,12 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
           case 'mtu':
             // MTU is optional, we can ignore it or store it
             break;
+          case 'postup':
+            interfaceConfig.postUp = value.replaceAll(";", "\n");
+            break;
+          case 'postdown':
+            interfaceConfig.postDown = value.replaceAll(";", "\n");
+            break;
           default:
             console.warn(`Unknown interface key: ${key}`);
         }
@@ -117,7 +134,7 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
             currentPeer.publicKey = value;
             break;
           case 'allowedips':
-            currentPeer.allowedIPs.push(value);
+            currentPeer.allowedIPs = value.split(',').map(ip => ip.trim());
             break;
           case 'endpoint':
             currentPeer.endpoint = value;
@@ -137,7 +154,7 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
         }
       }
     }
-    
+
     // Add the last peer if there is one
     if (currentPeer) {
       peers.push(currentPeer);
@@ -161,7 +178,7 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
@@ -170,9 +187,9 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         fileInputRef.current.files = dataTransfer.files;
-        
+
         // Trigger the change event manually
-        const event = new Event('change', { bubbles: true });
+        const event = new Event('change', {bubbles: true});
         fileInputRef.current.dispatchEvent(event);
       }
     }
@@ -185,7 +202,7 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
           Import WireGuard Configuration
         </h3>
         <p className="mt-1 text-sm text-gray-500">
-          Import a single WireGuard configuration file (.conf format). 
+          Import a single WireGuard configuration file (.conf format).
           To restore a complete backup, use the "Restore" button in the header instead.
         </p>
         <div className="mt-4">
@@ -233,14 +250,14 @@ const ImportConfig: React.FC<ImportConfigProps> = ({ onImport, onCancel }) => {
               )}
             </div>
           </div>
-          
+
           {error && (
             <div className="mt-4 text-sm text-red-600">
               {error}
             </div>
           )}
         </div>
-        
+
         <div className="mt-5 flex justify-end">
           <button
             type="button"

@@ -54,6 +54,9 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   if (config.interface.address && config.interface.address.length > 0) {
     content += `Address = ${config.interface.address.join(', ')}\n`;
   }
+  if (config.interface.endpoint) {
+    content += `# Endpoint = ${config.interface.endpoint}\n`;
+  }
 
   if (config.interface.listenPort) {
     content += `ListenPort = ${config.interface.listenPort}\n`;
@@ -67,6 +70,13 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   const mtu = settings.mtu;
   if (mtu) {
     content += `MTU = ${mtu}\n`;
+  }
+
+  if (config.interface.postUp) {
+    content += `PostUp = ${config.interface.postUp.replace(/\r?\n/g, '; ')}\n`;
+  }
+  if (config.interface.postDown) {
+    content += `PostDown = ${config.interface.postDown.replace(/\r?\n/g, '; ')}\n`;
   }
 
   config.peers.forEach(peer => {
@@ -88,13 +98,6 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
       content += `PresharedKey = ${peer.presharedKey}\n`;
     }
   });
-
-  if (config.interface.postUp) {
-    content += `PostUp = ${config.interface.postUp.replace(/\r?\n/g, '; ')}\n`;
-  }
-  if (config.interface.postDown) {
-    content += `PostDown = ${config.interface.postDown.replace(/\r?\n/g, '; ')}\n`;
-  }
 
   return content;
 }
