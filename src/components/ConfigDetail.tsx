@@ -32,6 +32,7 @@ interface EditableFieldProps {
   placeholder?: string;
   errorMessage?: string;
   className?: string;
+  props?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
 const EditableField = ({
@@ -41,7 +42,8 @@ const EditableField = ({
                          type = 'text',
                          placeholder = '',
                          errorMessage,
-                         className = ''
+                         className = '',
+                         props,
                        }: EditableFieldProps) => (
   <div>
     <div className="text-xs text-gray-500 mb-1">{label}</div>
@@ -52,11 +54,12 @@ const EditableField = ({
       placeholder={placeholder}
       className={
         `w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ` +
-        (className ? className + ' ' : '') +
         (errorMessage
           ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500')
+          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500') +
+        (className ? ' ' + className : '')
       }
+      {...props}
     />
     {errorMessage && (
       <div className="text-xs text-red-600 mt-1">{errorMessage}</div>
@@ -607,6 +610,8 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                     value={peer.publicKey}
                     onChange={val => updatePeer(i, {publicKey: val})}
                     errorMessage={peerPublicKeyError}
+                    className={peer.configId ? 'border border-gray-300 bg-gray-100 focus:ring-gray-500 focus:border-gray-500' : ''}
+                    props={{readOnly: !!peer.configId}}
                   />
                   <EditableArrayField
                     label="Allowed IPs"
