@@ -17,7 +17,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
   // Handle backing up all configurations and settings as JSON
   const handleBackup = () => {
-    if (configs.length === 0 && !settings) {
+    if (Object.keys(configs).length === 0 && !settings) {
       alert('No configurations or settings to backup');
       return;
     }
@@ -62,7 +62,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
   };
 
   // Handle the imported backup
-  const handleBackupImported = (configs: WireGuardConfig[], settings: Settings) => {
+  const handleBackupImported = (configs: { [id: string]: WireGuardConfig }, settings: Settings) => {
     // Replace all existing configs and settings
     replaceAllConfigs(configs);
     updateSettings(settings);
@@ -93,7 +93,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
 
   // Handle saving a config (add or update)
   const handleSaveConfig = (config: WireGuardConfig) => {
-    const isNewConfig = !configs.find(c => c.id === config.id);
+    const isNewConfig = !config.id || !configs[config.id];
 
     if (isNewConfig) {
       addConfig(config);

@@ -1,8 +1,9 @@
 import React, {useMemo, useState} from 'react';
 import {WireGuardConfig} from '../types/WireGuardConfig';
+import {getPublicKey} from "../utils/wireguard";
 
 interface ConfigListProps {
-  configs: WireGuardConfig[];
+  configs: { [id: string]: WireGuardConfig };
   onSelect: (config: WireGuardConfig) => void;
   onDelete?: (id: string) => void;
   onAdd: () => void;
@@ -17,9 +18,12 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
 
   // Filter and sort configs
   const filteredAndSortedConfigs = useMemo(() => {
-    let filtered = configs.filter(config =>
+    let filtered = Object.values(configs).filter(config =>
       config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      config.interface.address.some(addr => addr.toLowerCase().includes(searchTerm.toLowerCase()))
+      config.interface.address.some(addr => addr.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      config.interface.privateKey.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      config.interface.endpoint?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getPublicKey(config.interface.privateKey).toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return filtered.sort((a, b) => {
@@ -182,7 +186,7 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
                         </div>
                         <div className="flex-1 min-w-0">
                           {onEdit ? (
-                            <p 
+                            <p
                               className="text-sm font-medium text-gray-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -196,9 +200,11 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
                             <p className="text-sm font-medium text-gray-900 truncate">{config.name}</p>
                           )}
                           <div className="flex items-center space-x-4 mt-1">
-                            <p className="text-sm text-gray-500">
-                              {config.interface.address.join(', ')}
-                            </p>
+                            {
+                              config.interface.address.length > 0 && <p className="text-sm text-gray-500">
+                                {config.interface.address.join(', ')}
+                                </p>
+                            }
                             <div className="flex items-center text-sm text-gray-500">
                               <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

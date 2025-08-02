@@ -116,7 +116,8 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
               tabIndex={-1}
               aria-label="Remove"
               style={{padding: 0, background: 'none', border: 'none'}}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
@@ -139,7 +140,6 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
 
 const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, onDelete, onBack, onCancel}) => {
   const configContext = useConfig();
-  const allConfigs = configContext.configs || [];
   // Create empty config for new configurations
   const createEmptyConfig = (): WireGuardConfig => ({
     id: uuidv4(),
@@ -298,7 +298,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
 
   // Add peer as another config
   const addPeerFromConfig = (configId: string) => {
-    const peerConfig = allConfigs.find(c => c.id === configId);
+    const peerConfig = configContext.configs[configId];
     if (!peerConfig) return;
     const newPeer: PeerConfig = {
       publicKey: getPublicKey(peerConfig.interface.privateKey),
@@ -560,9 +560,11 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                 }}
               >
                 <option value="">Add Peer From Other</option>
-                {allConfigs.filter(c => c.id !== editedConfig.id).map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                {
+                  Object.values(configContext.configs).filter(c => c.id !== editedConfig.id).map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))
+                }
               </select>
             </div>
           </div>
@@ -577,7 +579,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                   <div className="flex items-center justify-between mb-1">
                     {peer.configId ? (
                       <span
-                        className="text-xs text-indigo-700">Peer from config: {allConfigs.find(c => c.id === peer.configId)?.name || peer.configId}</span>
+                        className="text-xs text-indigo-700">Peer from config: {configContext.configs[peer.configId]?.name || peer.configId}</span>
                     ) : <span className="text-xs font-semibold">Peer {i + 1}</span>}
                     <button
                       onClick={() => removePeer(i)}

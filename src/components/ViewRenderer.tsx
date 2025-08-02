@@ -10,7 +10,7 @@ import Settings from './Settings';
 interface ViewRendererProps {
   currentView: View;
   selectedConfigId?: string;
-  configs: WireGuardConfig[];
+  configs: { [id: string]: WireGuardConfig };
   settings: any;
   onSelect: (config: WireGuardConfig) => void;
   onAdd: () => void;
@@ -21,7 +21,7 @@ interface ViewRendererProps {
   onSave: (config: WireGuardConfig) => void;
   onBack: () => void;
   onConfigImported: (config: WireGuardConfig) => void;
-  onBackupImported: (configs: WireGuardConfig[], settings: any) => void;
+  onBackupImported: (configs: { [id: string]: WireGuardConfig }, settings: any) => void;
   onCancel: () => void;
 }
 
@@ -42,7 +42,7 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({
   onBackupImported,
   onCancel
 }) => {
-  const selectedConfig = selectedConfigId ? configs.find(c => c.id === selectedConfigId) : undefined;
+  const selectedConfig = selectedConfigId ? configs[selectedConfigId] : undefined;
 
   switch (currentView) {
     case View.LIST:

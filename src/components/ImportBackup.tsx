@@ -3,13 +3,13 @@ import {WireGuardConfig} from '../types/WireGuardConfig';
 import {Settings} from '../types/Settings';
 
 interface BackupData {
-  configs: WireGuardConfig[];
+  configs: { [id: string]: WireGuardConfig };
   settings: Settings;
   backupDate?: string;
 }
 
 interface ImportBackupProps {
-  onImport: (configs: WireGuardConfig[], settings: Settings) => void;
+  onImport: (configs: { [id: string]: WireGuardConfig }, settings: Settings) => void;
   onCancel: () => void;
 }
 
@@ -42,8 +42,8 @@ const ImportBackup: React.FC<ImportBackupProps> = ({onImport, onCancel}) => {
         const data = JSON.parse(content) as BackupData;
 
         // Validate the backup data structure
-        if (!data.configs || !Array.isArray(data.configs)) {
-          throw new Error('Invalid backup file: missing or invalid configs array');
+        if (!data.configs || typeof data.configs !== 'object') {
+          throw new Error('Invalid backup file: missing or invalid configs object');
         }
 
         if (!data.settings || typeof data.settings !== 'object') {
@@ -51,16 +51,17 @@ const ImportBackup: React.FC<ImportBackupProps> = ({onImport, onCancel}) => {
         }
 
         // Convert date strings back to Date objects for configs
-        const processedConfigs = data.configs.map(config => ({
-          ...config,
-          createdAt: new Date(config.createdAt),
-          updatedAt: new Date(config.updatedAt)
-        }));
+        for (const key in data.configs) {
+          const config = data.configs[key];
+          if (config.createdAt && typeof config.createdAt === 'string') {
+            config.createdAt = new Date(config.createdAt);
+          }
+          if (config.updatedAt && typeof config.updatedAt === 'string') {
+            config.updatedAt = new Date(config.updatedAt);
+          }
+        }
 
-        setPreview({
-          ...data,
-          configs: processedConfigs
-        });
+        setPreview(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to parse backup file');
         setPreview(null);
@@ -126,7 +127,7 @@ const ImportBackup: React.FC<ImportBackupProps> = ({onImport, onCancel}) => {
               <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-gray-700">Configurations:</span>
-                  <span className="ml-2 text-sm text-gray-600">{preview.configs.length} config(s)</span>
+                  <span className="ml-2 text-sm text-gray-600">{Object.keys(preview.configs).length} config(s)</span>
                 </div>
 
                 <div>
@@ -136,7 +137,8 @@ const ImportBackup: React.FC<ImportBackupProps> = ({onImport, onCancel}) => {
                     <div>IPv6 CIDR: {preview.settings.IPv6CIDR || 'Not set'}</div>
                     <div>Listen Port: {preview.settings.listenPort || 'Not set'}</div>
                     <div>MTU: {preview.settings.mtu || 'Not set'}</div>
-                    <div>Persistent Keepalive: {preview.settings.persistentKeepalive !== undefined ? `${preview.settings.persistentKeepalive} seconds` : 'Not set'}</div>
+                    <div>Persistent
+                      Keepalive: {preview.settings.persistentKeepalive !== undefined ? `${preview.settings.persistentKeepalive} seconds` : 'Not set'}</div>
                   </div>
                 </div>
 
@@ -154,12 +156,15 @@ const ImportBackup: React.FC<ImportBackupProps> = ({onImport, onCancel}) => {
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <path fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"/>
                     </svg>
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-yellow-800">
-                      <strong>Warning:</strong> Importing this backup will replace all existing configurations and settings.
+                      <strong>Warning:</strong> Importing this backup will replace all existing configurations and
+                      settings.
                     </p>
                   </div>
                 </div>

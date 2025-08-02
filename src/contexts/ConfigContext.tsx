@@ -3,11 +3,11 @@ import { WireGuardConfig } from '../types/WireGuardConfig';
 import { Settings, DEFAULT_SETTINGS } from '../types/Settings';
 
 interface ConfigContextType {
-  configs: WireGuardConfig[];
+  configs: { [id: string]: WireGuardConfig };
   addConfig: (config: WireGuardConfig) => void;
   updateConfig: (config: WireGuardConfig) => void;
   deleteConfig: (id: string) => void;
-  replaceAllConfigs: (configs: WireGuardConfig[]) => void;
+  replaceAllConfigs: (configs: { [id: string]: WireGuardConfig }) => void;
   getConfig: (id: string) => WireGuardConfig | undefined;
   settings: Settings;
   updateSettings: (settings: Settings) => void;
@@ -21,7 +21,7 @@ interface ConfigProviderProps {
 }
 
 export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
-  const [configs, setConfigs] = useState<WireGuardConfig[]>([]);
+  const [configs, setConfigs] = useState<{ [id: string]: WireGuardConfig }>({});
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -46,7 +46,7 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     }
 
     try {
-      const savedConfigs = localStorage.getItem('wireguardConfigs');
+      const savedConfigs = localStorage.getItem('wiregen.configs');
       if (savedConfigs) {
         // Parse the JSON string and convert date strings back to Date objects
         const parsedConfigs = JSON.parse(savedConfigs, (key, value) => {
@@ -58,7 +58,7 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         setConfigs(parsedConfigs);
       }
 
-      const savedSettings = localStorage.getItem('wireguardSettings');
+      const savedSettings = localStorage.getItem('wiregen.settings');
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
@@ -77,7 +77,7 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     }
 
     try {
-      localStorage.setItem('wireguardConfigs', JSON.stringify(configs));
+      localStorage.setItem('wiregen.configs', JSON.stringify(configs));
     } catch (error) {
       console.error('Failed to save configs to localStorage:', error);
       // You could add user notification here if needed
@@ -91,30 +91,34 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     }
 
     try {
-      localStorage.setItem('wireguardSettings', JSON.stringify(settings));
+      localStorage.setItem('wiregen.settings', JSON.stringify(settings));
     } catch (error) {
       console.error('Failed to save settings to localStorage:', error);
     }
   }, [settings, isInitialized]);
 
   const addConfig = (config: WireGuardConfig) => {
-    setConfigs(prev => [...prev, config]);
+    setConfigs(prev => ({ ...prev, [config.id]: config }));
   };
 
   const updateConfig = (config: WireGuardConfig) => {
-    setConfigs(prev => prev.map(c => c.id === config.id ? config : c));
+    setConfigs(prev => ({ ...prev, [config.id]: config }));
   };
 
   const deleteConfig = (id: string) => {
-    setConfigs(prev => prev.filter(c => c.id !== id));
+    setConfigs(prev => {
+      const newConfigs = { ...prev };
+      delete newConfigs[id];
+      return newConfigs;
+    });
   };
 
-  const replaceAllConfigs = (configs: WireGuardConfig[]) => {
+  const replaceAllConfigs = (configs: { [id: string]: WireGuardConfig }) => {
     setConfigs(configs);
   };
 
   const getConfig = (id: string) => {
-    return configs.find(c => c.id === id);
+    return configs[id];
   };
 
   const updateSettings = (settings: Settings) => {
@@ -122,11 +126,11 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
   };
 
   const resetAllData = () => {
-    setConfigs([]);
+    setConfigs({});
     setSettings(DEFAULT_SETTINGS);
     if (isLocalStorageAvailable()) {
-      localStorage.removeItem('wireguardConfigs');
-      localStorage.removeItem('wireguardSettings');
+      localStorage.removeItem('wiregen.configs');
+      localStorage.removeItem('wiregen.settings');
     }
   };
 
