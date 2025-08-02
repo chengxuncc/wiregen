@@ -304,9 +304,9 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     const newPeer: PeerConfig = {
       publicKey: getPublicKey(peerConfig.interface.privateKey),
       allowedIPs: peerConfig.interface.address,
-      endpoint: '',
+      endpoint: peerConfig.interface.endpoint,
       presharedKey: '',
-      persistentKeepalive: undefined,
+      persistentKeepalive: settings.persistentKeepalive,
       configId: peerConfig.id
     };
     setEditedConfig(prev => ({
@@ -339,7 +339,9 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     let content = '[Interface]\n';
     content += `PrivateKey = ${editedConfig.interface.privateKey}\n`;
     content += `# PublicKey = ${publicKey}\n`;
-    content += editedConfig.interface.address.map(addr => `Address = ${addr}\n`).join('');
+    if (editedConfig.interface.address && editedConfig.interface.address.length > 0) {
+      content += `Address = ${editedConfig.interface.address.join(', ')}\n`;
+    }
 
     if (editedConfig.interface.listenPort) {
       content += `ListenPort = ${editedConfig.interface.listenPort}\n`;
@@ -358,18 +360,16 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     editedConfig.peers.forEach(peer => {
       content += '\n[Peer]\n';
       content += `PublicKey = ${peer.publicKey}\n`;
-      content += peer.allowedIPs.map(ip => `AllowedIPs = ${ip}\n`).join('');
+      if (peer.allowedIPs && peer.allowedIPs.length > 0) {
+        content += `AllowedIPs = ${peer.allowedIPs.join(', ')}\n`;
+      }
 
       if (peer.endpoint) {
         content += `Endpoint = ${peer.endpoint}\n`;
       }
 
-      const persistentKeepalive = peer.persistentKeepalive !== undefined
-        ? peer.persistentKeepalive
-        : settings.persistentKeepalive;
-
-      if (persistentKeepalive !== undefined && persistentKeepalive > 0) {
-        content += `PersistentKeepalive = ${persistentKeepalive}\n`;
+      if (peer.persistentKeepalive !== undefined && peer.persistentKeepalive > 0) {
+        content += `PersistentKeepalive = ${peer.persistentKeepalive}\n`;
       }
 
       if (peer.presharedKey) {
