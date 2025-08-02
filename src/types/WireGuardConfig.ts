@@ -15,7 +15,7 @@ export interface InterfaceConfig {
   listenPort?: number;
   endpoint?: string;
   address: string[];
-  dns?: string[];
+  dns: string[];
   postUp?: string;
   postDown?: string;
 }

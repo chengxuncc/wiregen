@@ -1,10 +1,18 @@
 import React, {useEffect, useState} from 'react';
-import {WireGuardConfig} from '../types/WireGuardConfig';
+import {PeerConfig, WireGuardConfig} from '../types/WireGuardConfig';
 import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
 import {useConfig} from '../contexts/ConfigContext';
-import {getPublicKey, generatePrivateKey} from '../utils/wireguard';
+import {generatePrivateKey, getPublicKey} from '../utils/wireguard';
+import {
+  validateCIDR,
+  validateEndpoint,
+  validatePort,
+  validatePresharedKey,
+  validatePrivateKey,
+  validatePublicKey,
+} from '../utils/validation';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
@@ -15,23 +23,43 @@ interface ConfigDetailProps {
   onCancel?: () => void;
 }
 
-const EditableField = ({label, value, onChange, type = 'text', placeholder = '', className = ''}: {
+interface EditableFieldProps {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
+  errorMessage?: string;
   className?: string;
-}) => (
-  <div className={className}>
+}
+
+const EditableField = ({
+                         label,
+                         value,
+                         onChange,
+                         type = 'text',
+                         placeholder = '',
+                         errorMessage,
+                         className = ''
+                       }: EditableFieldProps) => (
+  <div>
     <div className="text-xs text-gray-500 mb-1">{label}</div>
     <input
       type={type}
       value={value?.toString() || ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+      className={
+        `w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ` +
+        (className ? className + ' ' : '') +
+        (errorMessage
+          ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500')
+      }
     />
+    {errorMessage && (
+      <div className="text-xs text-red-600 mt-1">{errorMessage}</div>
+    )}
   </div>
 );
 
@@ -54,37 +82,49 @@ const EditableTextAreaField = ({label, value, onChange, placeholder = '', classN
   </div>
 );
 
-const EditableArrayField = ({label, values, onChange, placeholder = 'Add new item'}: {
+// Restore original EditableArrayField for array editing UI
+const EditableArrayField = ({label, values, onChange, placeholder = 'Add new item', errorMessages = []}: {
   label: string;
   values: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
+  errorMessages?: (string | undefined)[];
 }) => (
   <div>
     <div className="text-xs text-gray-500 mb-1">{label}</div>
     <div className="space-y-2">
       {values.map((value, index) => (
-        <div key={index} className="flex gap-2">
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => {
-              const newValues = [...values];
-              newValues[index] = e.target.value;
-              onChange(newValues);
-            }}
-            placeholder={placeholder}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-          <button
-            onClick={() => {
-              const newValues = values.filter((_, i) => i !== index);
-              onChange(newValues);
-            }}
-            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
-          >
-            Remove
-          </button>
+        <div key={index} className="flex flex-col gap-1 relative">
+          <div className="flex gap-2 items-center">
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => {
+                const newValues = [...values];
+                newValues[index] = e.target.value;
+                onChange(newValues);
+              }}
+              placeholder={placeholder}
+              className={`flex-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 pr-8 ${errorMessages[index] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'}`}
+            />
+            <button
+              onClick={() => {
+                const newValues = values.filter((_, i) => i !== index);
+                onChange(newValues);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-700 focus:outline-none"
+              type="button"
+              tabIndex={-1}
+              aria-label="Remove"
+              style={{padding: 0, background: 'none', border: 'none'}}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          {errorMessages[index] && (
+            <div className="text-xs text-red-600 mt-1">{errorMessages[index]}</div>
+          )}
         </div>
       ))}
       <button
@@ -162,7 +202,29 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     }
   }, [editedConfig.interface.privateKey]);
 
+  // Validation state
+  const privateKeyError = validatePrivateKey(editedConfig.interface.privateKey);
+  const endpointError = validateEndpoint(editedConfig.interface.endpoint || '');
+  const portError = validatePort(editedConfig.interface.listenPort);
+  const addressErrors = editedConfig.interface.address?.map(validateCIDR);
+  const dnsErrors = editedConfig.interface.dns?.map(validateCIDR);
+
+  // Save button enabled only if all required fields are valid
+  const isFormValid =
+    !privateKeyError &&
+    !endpointError &&
+    !portError &&
+    addressErrors.every(e => !e) &&
+    dnsErrors.every(e => !e) &&
+    editedConfig.peers.every(peer =>
+      !validatePublicKey(peer.publicKey) &&
+      (peer.allowedIPs || []).every(ip => !validateCIDR(ip)) &&
+      !validateEndpoint(peer.endpoint) &&
+      !validatePresharedKey(peer.presharedKey)
+    );
+
   const handleSave = () => {
+    if (!isFormValid) return;
     setIsSaving(true);
     // Update the timestamp when saving
     const configToSave = {
@@ -224,10 +286,10 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const addPeer = () => {
     const newPeer = {
       publicKey: '',
-      allowedIPs: [''],
+      allowedIPs: [],
       endpoint: '',
       presharedKey: '',
-      persistentKeepalive: undefined
+      persistentKeepalive: settings.persistentKeepalive,
     };
     setEditedConfig(prev => ({
       ...prev,
@@ -239,7 +301,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const addPeerFromConfig = (configId: string) => {
     const peerConfig = allConfigs.find(c => c.id === configId);
     if (!peerConfig) return;
-    const newPeer = {
+    const newPeer: PeerConfig = {
       publicKey: getPublicKey(peerConfig.interface.privateKey),
       allowedIPs: peerConfig.interface.address,
       endpoint: '',
@@ -369,11 +431,13 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               )}
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || !isFormValid}
                 className={`inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
                   isSaving
                     ? 'bg-green-600 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                    : !isFormValid
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
                 }`}
               >
                 {isSaving ? (
@@ -396,6 +460,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                 value={editedConfig.interface.privateKey}
                 onChange={(value) => updateInterface({privateKey: value})}
                 placeholder="Enter private key"
+                errorMessage={privateKeyError}
               />
               <button
                 type="button"
@@ -426,6 +491,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               value={editedConfig.interface.endpoint || ''}
               onChange={(value) => updateInterface({endpoint: value || undefined})}
               placeholder="e.g., vpn.example.com:51820"
+              errorMessage={endpointError}
             />
             <EditableField
               label="Listen Port"
@@ -433,22 +499,32 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               onChange={(value) => updateInterface({listenPort: value ? parseInt(value) : undefined})}
               type="number"
               placeholder={settings.listenPort ? settings.listenPort.toString() : DEFAULT_SETTINGS.listenPort!.toString()}
+              errorMessage={portError}
             />
             <div className="sm:col-span-2">
               <EditableArrayField
                 label="Addresses"
-                values={editedConfig.interface.address}
+                values={editedConfig.interface.address || []}
                 onChange={updateInterfaceAddresses}
                 placeholder="e.g., 10.0.0.1/24"
+                // Pass validation errors for each address
+                errorMessages={addressErrors}
               />
             </div>
             <div className="sm:col-span-2">
-              <EditableArrayField
-                label="DNS Servers"
-                values={editedConfig.interface.dns || []}
-                onChange={updateInterfaceDNS}
-                placeholder="e.g., 8.8.8.8"
-              />
+              {(editedConfig.interface.dns || []).map((dns, idx) => (
+                <EditableField
+                  key={idx}
+                  label={`DNS #${idx + 1}`}
+                  value={dns}
+                  onChange={val => updateInterfaceDNS(
+                    editedConfig.interface.dns.map((d, i) => i === idx ? val : d)
+                  )}
+                  placeholder="e.g., 8.8.8.8"
+                  errorMessage={dnsErrors[idx]}
+                  className="mb-2"
+                />
+              ))}
             </div>
             <EditableTextAreaField
               label="PostUp Script"
@@ -498,47 +574,63 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
             </div>
           </div>
           <div className="space-y-4">
-            {editedConfig.peers.map((peer, i) => (
-              <div key={i} className="border rounded p-3 mb-2 bg-gray-50">
-                {peer.configId ? (
-                  <div className="text-xs text-indigo-700 mb-1">Peer from
-                    config: {allConfigs.find(c => c.id === peer.configId)?.name || peer.configId}</div>
-                ) : null}
-                {/* Existing peer fields UI here */}
-                <EditableField
-                  label="Public Key"
-                  value={peer.publicKey}
-                  onChange={val => updatePeer(i, {publicKey: val})}
-                />
-                <EditableArrayField
-                  label="Allowed IPs"
-                  values={peer.allowedIPs}
-                  onChange={vals => updatePeerAllowedIPs(i, vals)}
-                />
-                <EditableField
-                  label="Endpoint"
-                  value={peer.endpoint || ''}
-                  onChange={val => updatePeer(i, {endpoint: val})}
-                />
-                <EditableField
-                  label="Preshared Key"
-                  value={peer.presharedKey || ''}
-                  onChange={val => updatePeer(i, {presharedKey: val})}
-                />
-                <EditableField
-                  label="Persistent Keepalive"
-                  value={peer.persistentKeepalive?.toString() || ''}
-                  onChange={val => updatePeer(i, {persistentKeepalive: val ? parseInt(val) : undefined})}
-                  type="number"
-                />
-                <button
-                  onClick={() => removePeer(i)}
-                  className="mt-2 text-red-600 hover:text-red-800 text-xs"
-                >
-                  Remove Peer
-                </button>
-              </div>
-            ))}
+            {editedConfig.peers.map((peer, i) => {
+              const peerPublicKeyError = validatePublicKey(peer.publicKey);
+              const peerEndpointError = validateEndpoint(peer.endpoint);
+              const peerAllowedIpErrors = (peer.allowedIPs || []).map(validateCIDR);
+              const peerPresharedKeyError = validatePresharedKey(peer.presharedKey);
+              return (
+                <div key={i} className="border rounded p-3 mb-2 bg-gray-50 relative">
+                  <div className="flex items-center justify-between mb-1">
+                    {peer.configId ? (
+                      <span
+                        className="text-xs text-indigo-700">Peer from config: {allConfigs.find(c => c.id === peer.configId)?.name || peer.configId}</span>
+                    ) : <span className="text-xs font-semibold">Peer {i + 1}</span>}
+                    <button
+                      onClick={() => removePeer(i)}
+                      className="ml-2 text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-200 rounded transition-colors duration-150"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <EditableField
+                    label="Public Key"
+                    value={peer.publicKey}
+                    onChange={val => updatePeer(i, {publicKey: val})}
+                    errorMessage={peerPublicKeyError}
+                  />
+                  {(peer.allowedIPs || []).map((ip, idx) => (
+                    <EditableField
+                      key={idx}
+                      label={`Allowed IP #${idx + 1}`}
+                      value={ip}
+                      onChange={val => updatePeerAllowedIPs(i, peer.allowedIPs.map((a, j) => j === idx ? val : a))}
+                      placeholder="e.g., 10.0.0.2/32"
+                      errorMessage={peerAllowedIpErrors[idx]}
+                      className="mb-2"
+                    />
+                  ))}
+                  <EditableField
+                    label="Endpoint"
+                    value={peer.endpoint || ''}
+                    onChange={val => updatePeer(i, {endpoint: val})}
+                    errorMessage={peerEndpointError}
+                  />
+                  <EditableField
+                    label="Preshared Key"
+                    value={peer.presharedKey || ''}
+                    onChange={val => updatePeer(i, {presharedKey: val})}
+                    errorMessage={peerPresharedKeyError}
+                  />
+                  <EditableField
+                    label="Persistent Keepalive"
+                    value={peer.persistentKeepalive?.toString() || ''}
+                    onChange={val => updatePeer(i, {persistentKeepalive: val ? parseInt(val) : undefined})}
+                    type="number"
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

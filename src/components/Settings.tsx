@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
-import { useConfig } from '../contexts/ConfigContext';
-import { Settings, DEFAULT_SETTINGS } from '../types/Settings';
-import { validateIPv4CIDR, validateIPv6CIDR } from '../utils/validation';
+import React, {useState} from 'react';
+import {useConfig} from '../contexts/ConfigContext';
+import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
+import {
+  validateIPv4CIDR,
+  validateIPv6CIDR,
+  validateMTU,
+  validatePersistentKeepalive,
+  validatePort
+} from '../utils/validation';
 
 interface SettingsProps {
   onBack: () => void;
 }
 
-const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
-  const { settings, updateSettings } = useConfig();
+const SettingsComponent: React.FC<SettingsProps> = ({onBack}) => {
+  const {settings, updateSettings} = useConfig();
   const [formData, setFormData] = useState<Settings>(settings);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -16,34 +22,37 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
     const newErrors: { [key: string]: string } = {};
 
     if (formData.mtu !== undefined) {
-      if (formData.mtu < 576 || formData.mtu > 1500) {
-        newErrors.mtu = 'MTU must be between 576 and 1500';
+      const mtuError = validateMTU(formData.mtu);
+      if (mtuError) {
+        newErrors.mtu = mtuError;
       }
     }
 
     if (formData.persistentKeepalive !== undefined) {
-      if (formData.persistentKeepalive < 0 || formData.persistentKeepalive > 65535) {
-        newErrors.persistentKeepalive = 'Persistent Keepalive must be between 0 and 65535 seconds';
+      const keepaliveError = validatePersistentKeepalive(formData.persistentKeepalive);
+      if (keepaliveError) {
+        newErrors.persistentKeepalive = keepaliveError;
       }
     }
 
     if (formData.listenPort !== undefined) {
-      if (formData.listenPort < 1 || formData.listenPort > 65535) {
-        newErrors.listenPort = 'Listen Port must be between 1 and 65535';
+      const portError = validatePort(formData.listenPort);
+      if (portError) {
+        newErrors.listenPort = portError;
       }
     }
 
     if (formData.IPv4CIDR) {
-      const ipv4Errors = validateIPv4CIDR(formData.IPv4CIDR);
-      if (ipv4Errors.length > 0) {
-        newErrors.IPv4CIDR = ipv4Errors[0];
+      const ipv4Error = validateIPv4CIDR(formData.IPv4CIDR);
+      if (ipv4Error) {
+        newErrors.IPv4CIDR = ipv4Error;
       }
     }
 
     if (formData.IPv6CIDR) {
-      const ipv6Errors = validateIPv6CIDR(formData.IPv6CIDR);
-      if (ipv6Errors.length > 0) {
-        newErrors.IPv6CIDR = ipv6Errors[0];
+      const ipv6Error = validateIPv6CIDR(formData.IPv6CIDR);
+      if (ipv6Error) {
+        newErrors.IPv6CIDR = ipv6Error;
       }
     }
 
@@ -83,7 +92,7 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
   };
 
   const handleUseAllDefaults = () => {
-    setFormData({ ...DEFAULT_SETTINGS });
+    setFormData({...DEFAULT_SETTINGS});
     setErrors({});
   };
 
@@ -118,7 +127,8 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   title="Use default value"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                   </svg>
                 </button>
               </div>
@@ -150,7 +160,8 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   title="Use default value"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                   </svg>
                 </button>
               </div>
@@ -184,7 +195,8 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   title="Use default value"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                   </svg>
                 </button>
               </div>
@@ -218,7 +230,8 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   title="Use default value"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                   </svg>
                 </button>
               </div>
@@ -252,7 +265,8 @@ const SettingsComponent: React.FC<SettingsProps> = ({ onBack }) => {
                   title="Use default value"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                   </svg>
                 </button>
               </div>
