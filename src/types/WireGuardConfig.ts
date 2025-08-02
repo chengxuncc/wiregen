@@ -25,6 +25,7 @@ export interface WireGuardConfig {
   name: string;
   interface: InterfaceConfig;
   peers: PeerConfig[];
+  enableAllPeers?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

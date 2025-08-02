@@ -95,7 +95,7 @@ export const validateEndpoint = (endpoint?: string): string | undefined => {
   if (!endpoint) {
     return undefined;
   }
-  const endpointRegex = /^[^:]+:\d+$/;
+  const endpointRegex = /^([^:]+|\[([0-9a-fA-F0-9:]+:+)+[0-9a-fA-F]+\]):\d{1,5}$/;
   if (!endpointRegex.test(endpoint)) {
     return 'Invalid endpoint format (e.g., example.com:51820)';
   }

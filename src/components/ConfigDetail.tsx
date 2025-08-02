@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {PeerConfig, WireGuardConfig} from '../types/WireGuardConfig';
+import {WireGuardConfig} from '../types/WireGuardConfig';
 import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
 import {useConfig} from '../contexts/ConfigContext';
-import {generatePrivateKey, generateWireGuardConfig, getPublicKey} from '../utils/wireguard';
+import {generatePrivateKey, generateWireGuardConfig, getPublicKey, peerFromConfig} from '../utils/wireguard';
 import {
   validateCIDR,
   validateEndpoint,
@@ -178,7 +178,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   useEffect(() => {
     const generateQRCode = async () => {
       try {
-        const configText = generateWireGuardConfig(settings, editedConfig);
+        const configText = generateWireGuardConfig(settings, editedConfig, configContext.configs);
         const qrUrl = await QRCode.toDataURL(configText, {
           errorCorrectionLevel: 'M',
           margin: 1,
@@ -196,7 +196,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
 
     generateQRCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editedConfig, settings]);
+  }, [editedConfig, settings, configContext.configs]);
 
   useEffect(() => {
     if (editedConfig.interface.privateKey) {
@@ -305,28 +305,9 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const addPeerFromConfig = (configId: string) => {
     const peerConfig = configContext.configs[configId];
     if (!peerConfig) return;
-    // Map allowedIPs to /32 for IPv4 and /128 for IPv6
-    const mappedAllowedIPs = (peerConfig.interface.address || []).map(addr => {
-      if (addr.includes('.')) {
-        // IPv4
-        return addr.replace(/\/(\d+)$/, '/32');
-      } else if (addr.includes(':')) {
-        // IPv6
-        return addr.replace(/\/(\d+)$/, '/128');
-      }
-      return addr;
-    });
-    const newPeer: PeerConfig = {
-      publicKey: getPublicKey(peerConfig.interface.privateKey),
-      allowedIPs: mappedAllowedIPs,
-      endpoint: peerConfig.interface.endpoint,
-      presharedKey: '',
-      persistentKeepalive: settings.persistentKeepalive,
-      configId: peerConfig.id
-    };
     setEditedConfig(prev => ({
       ...prev,
-      peers: [...prev.peers, newPeer]
+      peers: [...prev.peers, peerFromConfig(peerConfig, settings)]
     }));
   };
 
@@ -558,6 +539,19 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
 
         {/* Peers Section */}
         <div className="px-6 py-4">
+          {/* Enable All Peers Toggle */}
+          <div className="flex items-center mb-4">
+            <input
+              id="enable-all-peers"
+              type="checkbox"
+              className="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 accent-indigo-500"
+              checked={!!editedConfig.enableAllPeers}
+              onChange={e => updateConfig({enableAllPeers: e.target.checked})}
+            />
+            <label htmlFor="enable-all-peers" className="text-sm text-gray-700 font-medium">
+              Enable All Peers
+            </label>
+          </div>
           <div className="flex justify-between items-center mb-4">
             <h4 className="text-md font-medium text-gray-900">
               Peers ({editedConfig.peers.length})
@@ -655,7 +649,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
           {/* Configuration Text */}
           <div>
             <textarea
-              value={generateWireGuardConfig(settings, editedConfig)}
+              value={generateWireGuardConfig(settings, editedConfig, configContext.configs)}
               readOnly
               className="w-full h-64 font-mono text-sm bg-gray-50 border border-gray-300 rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Configuration will be generated here..."

@@ -176,31 +176,28 @@ export function parseWireGuardConfig(content: string, configName: string): WireG
   };
 };
 
-export function generateWireGuardConfig(settings: Settings, config: WireGuardConfig): string {
+export function generateWireGuardConfig(settings: Settings, config: WireGuardConfig, allConfigs?: {
+  [id: string]: WireGuardConfig
+}): string {
   let content = '[Interface]\n';
   content += `PrivateKey = ${config.interface.privateKey}\n`;
   content += `# PublicKey = ${getPublicKey(config.interface.privateKey)}\n`;
-  if (config.interface.address && config.interface.address.length > 0) {
-    content += `Address = ${config.interface.address.join(', ')}\n`;
-  }
   if (config.interface.endpoint) {
     content += `# Endpoint = ${config.interface.endpoint}\n`;
   }
-
+  if (config.interface.address && config.interface.address.length > 0) {
+    content += `Address = ${config.interface.address.join(', ')}\n`;
+  }
   if (config.interface.listenPort) {
     content += `ListenPort = ${config.interface.listenPort}\n`;
   }
-
   if (config.interface.dns && config.interface.dns.length > 0) {
     content += `DNS = ${config.interface.dns.join(', ')}\n`;
   }
-
-  // Remove interface MTU from config text, use only settings.mtu
   const mtu = settings.mtu;
   if (mtu) {
     content += `MTU = ${mtu}\n`;
   }
-
   if (config.interface.postUp) {
     content += `PostUp = ${config.interface.postUp.replace(/\r?\n/g, '; ')}\n`;
   }
@@ -208,17 +205,26 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
     content += `PostDown = ${config.interface.postDown.replace(/\r?\n/g, '; ')}\n`;
   }
 
-  config.peers.forEach(peer => {
+  let peers: PeerConfig[] = config.peers;
+  if (config.enableAllPeers && allConfigs) {
+    peers = peers.concat(Object.values(allConfigs)
+      .filter(c => c.id !== config.id && c.interface.privateKey !== config.interface.privateKey)
+      .filter(c => {
+        const publicKey = getPublicKey(c.interface.privateKey);
+        return peers.every(peer => peer.publicKey !== publicKey);
+      })
+      .map(c => peerFromConfig(c, settings)));
+  }
+
+  peers.forEach(peer => {
     content += '\n[Peer]\n';
     content += `PublicKey = ${peer.publicKey}\n`;
     if (peer.allowedIPs && peer.allowedIPs.length > 0) {
       content += `AllowedIPs = ${peer.allowedIPs.join(', ')}\n`;
     }
-
     if (peer.endpoint) {
       content += `Endpoint = ${peer.endpoint}\n`;
     }
-
     if (peer.persistentKeepalive !== undefined && peer.persistentKeepalive > 0) {
       content += `PersistentKeepalive = ${peer.persistentKeepalive}\n`;
     }
@@ -229,4 +235,26 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   });
 
   return content;
+}
+
+export function peerFromConfig(config: WireGuardConfig, settings: Settings): PeerConfig {
+  // Map allowedIPs to /32 for IPv4 and /128 for IPv6
+  const mappedAllowedIPs = (config.interface.address || []).map(addr => {
+    if (addr.includes('.')) {
+      // IPv4
+      return addr.replace(/\/(\d+)$/, '/32');
+    } else if (addr.includes(':')) {
+      // IPv6
+      return addr.replace(/\/(\d+)$/, '/128');
+    }
+    return addr;
+  });
+  return {
+    publicKey: getPublicKey(config.interface.privateKey),
+    allowedIPs: mappedAllowedIPs,
+    endpoint: config.interface.endpoint,
+    presharedKey: '',
+    persistentKeepalive: settings.persistentKeepalive,
+    configId: config.id
+  };
 }
