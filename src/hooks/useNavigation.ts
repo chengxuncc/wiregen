@@ -4,7 +4,6 @@ import {WireGuardConfig} from "../types/WireGuardConfig";
 export enum View {
   LIST = 'LIST',
   DETAIL = 'DETAIL',
-  IMPORT = 'IMPORT',
   IMPORT_BACKUP = 'IMPORT_BACKUP',
   SETTINGS = 'SETTINGS'
 }
@@ -13,7 +12,6 @@ export enum View {
 const VIEW_PATHS: Record<View, string> = {
   [View.LIST]: '/',
   [View.DETAIL]: '/config',
-  [View.IMPORT]: '/import',
   [View.IMPORT_BACKUP]: '/import-backup',
   [View.SETTINGS]: '/settings'
 };
@@ -21,7 +19,6 @@ const VIEW_PATHS: Record<View, string> = {
 const PATH_VIEWS: Record<string, View> = {
   '/': View.LIST,
   '/config': View.DETAIL,
-  '/import': View.IMPORT,
   '/import-backup': View.IMPORT_BACKUP,
   '/settings': View.SETTINGS
 };

@@ -52,11 +52,6 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     navigateToView(View.DETAIL);
   };
 
-  // Handle importing a config
-  const handleImportConfig = () => {
-    navigateToView(View.IMPORT);
-  };
-
   // Handle importing a backup
   const handleRestore = () => {
     navigateToView(View.IMPORT_BACKUP);
@@ -128,7 +123,6 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
     handleBackup,
     handleSelectConfig,
     handleAddConfig,
-    handleImportConfig,
     handleRestore,
     handleBackupImported,
     handleSettings,

@@ -1,7 +1,8 @@
 // Utility functions for WireGuard key handling
 import {x25519} from '@noble/curves/ed25519';
-import {WireGuardConfig} from "../types/WireGuardConfig";
+import {InterfaceConfig, PeerConfig, WireGuardConfig} from "../types/WireGuardConfig";
 import {Settings} from "../types/Settings";
+import {v4 as uuidv4} from "uuid";
 
 export function base64ToUint8Array(base64: string): Uint8Array {
   const binary = atob(base64);
@@ -46,6 +47,134 @@ export function generatePrivateKey(): string {
   }
   return btoa(binary);
 }
+
+export function parseWireGuardConfig(content: string, configName: string): WireGuardConfig {
+  const lines = content.split('\n').map(line => line.trim());
+  let currentSection: 'interface' | 'peer' | null = null;
+
+  const interfaceConfig: InterfaceConfig = {
+    privateKey: '',
+    address: [],
+    listenPort: undefined,
+    dns: [],
+  };
+
+  const peers: PeerConfig[] = [];
+  let currentPeer: PeerConfig | null = null;
+
+  for (const line of lines) {
+    if (line === '') continue;
+    if (line.startsWith('#') && currentSection === 'interface' && line.includes('=')) {
+      const i = line.indexOf('=');
+      const key = line.slice(1, i).trim();
+      const value = line.slice(i + 1).trim();
+      switch (key.toLowerCase()) {
+        case 'endpoint':
+          interfaceConfig.endpoint = value;
+          break;
+      }
+    }
+
+    if (line === '[Interface]') {
+      currentSection = 'interface';
+      continue;
+    }
+
+    if (line === '[Peer]') {
+      currentSection = 'peer';
+      if (currentPeer) {
+        peers.push(currentPeer);
+      }
+      currentPeer = {
+        publicKey: '',
+        allowedIPs: [],
+        endpoint: undefined,
+        persistentKeepalive: undefined,
+        presharedKey: undefined,
+      };
+      continue;
+    }
+
+    if (!currentSection) {
+      if (line.includes('=')) {
+        throw new Error(`Configuration line "${line}" found outside of [Interface] or [Peer] section`);
+      }
+      continue;
+    }
+
+    if (!line.includes('=')) {
+      throw new Error(`Invalid configuration line: "${line}". Expected format: Key = Value`);
+    }
+    const i = line.indexOf('=');
+    const key = line.slice(0, i).trim();
+    const value = line.slice(i + 1).trim();
+    if (currentSection === 'interface') {
+      switch (key.toLowerCase()) {
+        case 'privatekey':
+          interfaceConfig.privateKey = value;
+          break;
+        case 'address':
+          interfaceConfig.address = value.split(',').map(addr => addr.trim());
+          break;
+        case 'listenport':
+          interfaceConfig.listenPort = parseInt(value);
+          break;
+        case 'dns':
+          interfaceConfig.dns = value.split(',').map(dns => dns.trim());
+          break;
+        case 'mtu':
+          // MTU is optional, we can ignore it or store it
+          break;
+        case 'postup':
+          interfaceConfig.postUp = value.replaceAll(";", "\n");
+          break;
+        case 'postdown':
+          interfaceConfig.postDown = value.replaceAll(";", "\n");
+          break;
+        default:
+          console.warn(`Unknown interface key: ${key}`);
+      }
+    } else if (currentSection === 'peer' && currentPeer) {
+      switch (key.toLowerCase()) {
+        case 'publickey':
+          currentPeer.publicKey = value;
+          break;
+        case 'allowedips':
+          currentPeer.allowedIPs = value.split(',').map(ip => ip.trim());
+          break;
+        case 'endpoint':
+          currentPeer.endpoint = value;
+          break;
+        case 'persistentkeepalive':
+          const keepalive = parseInt(value);
+          if (isNaN(keepalive) || keepalive < 0) {
+            throw new Error(`Invalid persistent keepalive: ${value}. Must be a non-negative number`);
+          }
+          currentPeer.persistentKeepalive = keepalive;
+          break;
+        case 'presharedkey':
+          currentPeer.presharedKey = value;
+          break;
+        default:
+          console.warn(`Unknown peer key: ${key}`);
+      }
+    }
+  }
+
+  // Add the last peer if there is one
+  if (currentPeer) {
+    peers.push(currentPeer);
+  }
+
+  return {
+    id: uuidv4(),
+    name: configName || 'Imported Configuration',
+    interface: interfaceConfig,
+    peers,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+};
 
 export function generateWireGuardConfig(settings: Settings, config: WireGuardConfig): string {
   let content = '[Interface]\n';

@@ -1,13 +1,13 @@
 import React, {useMemo, useState} from 'react';
 import {WireGuardConfig} from '../types/WireGuardConfig';
-import {getPublicKey} from "../utils/wireguard";
+import {getPublicKey, parseWireGuardConfig} from "../utils/wireguard";
 
 interface ConfigListProps {
   configs: { [id: string]: WireGuardConfig };
   onSelect: (config: WireGuardConfig) => void;
   onDelete?: (id: string) => void;
   onAdd: () => void;
-  onImport: () => void;
+  onImport: (config: WireGuardConfig) => void;
   onExport: (config: WireGuardConfig) => void;
   onEdit?: (configId: string) => void;
 }
@@ -15,6 +15,7 @@ interface ConfigListProps {
 const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onAdd, onImport, onExport, onEdit}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'updatedAt' | 'peers'>('updatedAt');
+  const confImportRef = React.useRef<HTMLInputElement>(null);
 
   // Filter and sort configs
   const filteredAndSortedConfigs = useMemo(() => {
@@ -58,6 +59,25 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const config = parseWireGuardConfig(content, file.name.replace(/\.conf$/, ''));
+        if (config) {
+          onImport(config);
+        }
+      } catch (err) {
+        console.log("import error", err);
+        alert('Failed to import config');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="bg-white shadow rounded-lg">
       {/* Search and controls section */}
@@ -97,8 +117,17 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
 
           {/* Action buttons */}
           <div className="flex gap-2">
+            <input
+              type="file"
+              accept=".conf,.txt"
+              ref={confImportRef}
+              style={{display: 'none'}}
+              onChange={handleFileChange}
+            />
             <button
-              onClick={onImport}
+              onClick={() => {
+                confImportRef.current?.click();
+              }}
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"

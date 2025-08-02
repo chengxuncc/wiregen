@@ -16,7 +16,6 @@ const AppContent: React.FC = () => {
     handleBackup,
     handleSelectConfig,
     handleAddConfig,
-    handleImportConfig,
     handleRestore,
     handleBackupImported,
     handleSettings,
@@ -65,13 +64,12 @@ const AppContent: React.FC = () => {
         settings={settings}
         onSelect={handleSelectConfig}
         onAdd={handleAddConfig}
-        onImport={handleImportConfig}
+        onImport={handleConfigImported}
         onExport={handleExportConfig}
         onEdit={handleEditConfig}
         onDelete={handleDeleteConfig}
         onSave={handleSaveConfig}
         onBack={handleBack}
-        onConfigImported={handleConfigImported}
         onBackupImported={handleBackupImported}
         onCancel={handleCancel}
         importedConfig={importedConfig}
