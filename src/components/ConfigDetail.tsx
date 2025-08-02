@@ -83,12 +83,13 @@ const EditableTextAreaField = ({label, value, onChange, placeholder = '', classN
   </div>
 );
 
-const EditableArrayField = ({label, values, onChange, placeholder = 'Add new item', errorMessages = []}: {
+const EditableArrayField = ({label, values, onChange, placeholder = 'Add new item', errorMessages = [], buttons}: {
   label: string;
   values: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
   errorMessages?: (string | undefined)[];
+  buttons?: React.ReactNode[];
 }) => (
   <div>
     <div className="text-xs text-gray-500 mb-1">{label}</div>
@@ -128,12 +129,15 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
           )}
         </div>
       ))}
-      <button
-        onClick={() => onChange([...values, ''])}
-        className="text-indigo-600 hover:text-indigo-700 text-sm"
-      >
-        Add {label}
-      </button>
+      <div className="flex gap-4">
+        <button
+          onClick={() => onChange([...values, ''])}
+          className="text-indigo-600 hover:text-indigo-700 text-sm"
+        >
+          Add {label}
+        </button>
+        {buttons}
+      </div>
     </div>
   </div>
 );
@@ -509,6 +513,63 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                 placeholder="e.g., 10.0.0.1/24"
                 // Pass validation errors for each address
                 errorMessages={addressErrors}
+                buttons={[
+                  <button
+                    type="button"
+                    className="text-indigo-600 hover:text-indigo-700 text-sm"
+                    onClick={() => {
+                      // Generate next IPv4 address
+                      const subnet = settings.IPv4CIDR || settings.IPv4CIDR || '10.0.0.0/24';
+                      const [base, mask] = subnet.split('/');
+                      const baseParts = base.split('.').map(Number);
+                      // Collect all used IPv4 addresses from all configs
+                      const allConfigs = Object.values(configContext.configs);
+                      let used = allConfigs.flatMap(cfg => (cfg.interface.address || [])
+                        .filter(a => a.includes('.') && a.endsWith('/' + mask))
+                        .map(a => Number(a.split('/')[0].split('.').slice(-1)[0]))
+                      );
+                      // Also include current editedConfig
+                      used = used.concat((editedConfig.interface.address || [])
+                        .filter(a => a.includes('.') && a.endsWith('/' + mask))
+                        .map(a => Number(a.split('/')[0].split('.').slice(-1)[0])));
+                      let next = 1;
+                      while (used.includes(next) && next < 255) next++;
+                      if (next < 255) {
+                        const addr = `${baseParts[0]}.${baseParts[1]}.${baseParts[2]}.${next}/${mask}`;
+                        updateInterfaceAddresses([...(editedConfig.interface.address || []), addr]);
+                      }
+                    }}
+                  >
+                    Add Network IPv4 Address
+                  </button>,
+                  <button
+                    type="button"
+                    className="text-indigo-600 hover:text-indigo-700 text-sm"
+                    onClick={() => {
+                      // Generate next IPv6 address
+                      const subnet = settings.IPv6CIDR || settings.IPv6CIDR || 'fd00::/64';
+                      const [base, mask] = subnet.split('/');
+                      // Collect all used IPv6 addresses from all configs
+                      const allConfigs = Object.values(configContext.configs);
+                      let used = allConfigs.flatMap(cfg => (cfg.interface.address || [])
+                        .filter(a => a.includes(':') && a.endsWith('/' + mask))
+                        .map(a => parseInt(a.split('/')[0].split(':').slice(-1)[0], 16))
+                      );
+                      // Also include current editedConfig
+                      used = used.concat((editedConfig.interface.address || [])
+                        .filter(a => a.includes(':') && a.endsWith('/' + mask))
+                        .map(a => parseInt(a.split('/')[0].split(':').slice(-1)[0], 16)));
+                      let next = 1;
+                      while (used.includes(next) && next < 65535) next++;
+                      if (next < 65535) {
+                        const addr = `${base}${base.endsWith(':') ? '' : ':'}${next.toString(16)}/${mask}`;
+                        updateInterfaceAddresses([...(editedConfig.interface.address || []), addr]);
+                      }
+                    }}
+                  >
+                    Add Network IPv6 Address
+                  </button>
+                ]}
               />
             </div>
             <div className="sm:col-span-2">
