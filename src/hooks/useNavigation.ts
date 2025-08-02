@@ -83,4 +83,4 @@ export const useNavigation = () => {
     navigateToView,
     View
   };
-}; 
+};
