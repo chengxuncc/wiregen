@@ -64,7 +64,7 @@ export const validatePublicKey = (key: string): string | undefined => {
   }
   const keyRegex = /^[A-Za-z0-9+/]{43}=$/;
   if (!keyRegex.test(key)) {
-    return 'Invalid WireGuard public key format';
+    return 'Invalid Public key';
   }
   return undefined;
 };
@@ -75,7 +75,7 @@ export const validatePrivateKey = (key: string): string | undefined => {
   }
   const keyRegex = /^[A-Za-z0-9+/]{43}=$/;
   if (!keyRegex.test(key)) {
-    return 'Invalid WireGuard private key format';
+    return 'Invalid Private key';
   }
   return undefined;
 };
@@ -86,7 +86,7 @@ export const validatePresharedKey = (key?: string): string | undefined => {
   }
   const keyRegex = /^[A-Za-z0-9+/]{43}=$/;
   if (!keyRegex.test(key)) {
-    return 'Invalid WireGuard preshared key format';
+    return 'Invalid Preshared key';
   }
   return undefined;
 };

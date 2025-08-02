@@ -82,7 +82,6 @@ const EditableTextAreaField = ({label, value, onChange, placeholder = '', classN
   </div>
 );
 
-// Restore original EditableArrayField for array editing UI
 const EditableArrayField = ({label, values, onChange, placeholder = 'Add new item', errorMessages = []}: {
   label: string;
   values: string[];
@@ -94,8 +93,8 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
     <div className="text-xs text-gray-500 mb-1">{label}</div>
     <div className="space-y-2">
       {values.map((value, index) => (
-        <div key={index} className="flex flex-col gap-1 relative">
-          <div className="flex gap-2 items-center">
+        <div key={index} className="flex flex-col gap-1">
+          <div className="relative flex items-center">
             <input
               type="text"
               value={value}
@@ -112,7 +111,7 @@ const EditableArrayField = ({label, values, onChange, placeholder = 'Add new ite
                 const newValues = values.filter((_, i) => i !== index);
                 onChange(newValues);
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-700 focus:outline-none"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-700 focus:outline-none flex-shrink-0"
               type="button"
               tabIndex={-1}
               aria-label="Remove"
@@ -512,19 +511,13 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               />
             </div>
             <div className="sm:col-span-2">
-              {(editedConfig.interface.dns || []).map((dns, idx) => (
-                <EditableField
-                  key={idx}
-                  label={`DNS #${idx + 1}`}
-                  value={dns}
-                  onChange={val => updateInterfaceDNS(
-                    editedConfig.interface.dns.map((d, i) => i === idx ? val : d)
-                  )}
-                  placeholder="e.g., 8.8.8.8"
-                  errorMessage={dnsErrors[idx]}
-                  className="mb-2"
-                />
-              ))}
+              <EditableArrayField
+                label="DNS Servers"
+                values={editedConfig.interface.dns || []}
+                onChange={updateInterfaceDNS}
+                placeholder="e.g., 8.8.8.8"
+                errorMessages={dnsErrors}
+              />
             </div>
             <EditableTextAreaField
               label="PostUp Script"
@@ -599,17 +592,13 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                     onChange={val => updatePeer(i, {publicKey: val})}
                     errorMessage={peerPublicKeyError}
                   />
-                  {(peer.allowedIPs || []).map((ip, idx) => (
-                    <EditableField
-                      key={idx}
-                      label={`Allowed IP #${idx + 1}`}
-                      value={ip}
-                      onChange={val => updatePeerAllowedIPs(i, peer.allowedIPs.map((a, j) => j === idx ? val : a))}
-                      placeholder="e.g., 10.0.0.2/32"
-                      errorMessage={peerAllowedIpErrors[idx]}
-                      className="mb-2"
-                    />
-                  ))}
+                  <EditableArrayField
+                    label="Allowed IPs"
+                    values={peer.allowedIPs || []}
+                    onChange={allowedIPs => updatePeerAllowedIPs(i, allowedIPs)}
+                    placeholder="e.g., 10.0.0.2/32"
+                    errorMessages={peerAllowedIpErrors}
+                  />
                   <EditableField
                     label="Endpoint"
                     value={peer.endpoint || ''}
