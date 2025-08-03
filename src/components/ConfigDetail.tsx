@@ -522,6 +522,30 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                 onChange={updateInterfaceDNS}
                 placeholder="e.g., 1.1.1.1, 2606:4700:4700::1111"
                 errorMessages={dnsErrors}
+                buttons={[
+                  <button
+                    type="button"
+                    className="text-indigo-600 hover:text-indigo-700 text-sm"
+                    onClick={() => {
+                      if (!editedConfig.interface.dns.includes('1.1.1.1')) {
+                        updateInterfaceDNS([...editedConfig.interface.dns, '1.1.1.1']);
+                      }
+                    }}
+                  >
+                    1.1.1.1
+                  </button>,
+                  <button
+                    type="button"
+                    className="text-indigo-600 hover:text-indigo-700 text-sm"
+                    onClick={() => {
+                      if (!editedConfig.interface.dns.includes('2606:4700:4700::1111')) {
+                        updateInterfaceDNS([...editedConfig.interface.dns, '2606:4700:4700::1111']);
+                      }
+                    }}
+                  >
+                    2606:4700:4700::1111
+                  </button>
+                ]}
               />
             </div>
             <EditableTextAreaField
