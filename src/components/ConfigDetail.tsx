@@ -8,12 +8,13 @@ import {generatePrivateKey, generateWireGuardConfig, getPublicKey, peerFromConfi
 import {
   validateCIDR,
   validateEndpoint,
+  validateHost,
   validateIPAddress,
   validatePort,
   validatePresharedKey,
   validatePrivateKey,
   validatePublicKey,
-} from '../utils/validation';
+} from '../utils/common';
 
 interface ConfigDetailProps {
   config?: WireGuardConfig;
@@ -211,7 +212,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
 
   // Validation state
   const privateKeyError = validatePrivateKey(editedConfig.interface.privateKey);
-  const endpointError = validateEndpoint(editedConfig.interface.endpoint || '');
+  const hostError = validateHost(editedConfig.interface.host);
   const portError = validatePort(editedConfig.interface.listenPort);
   const addressErrors = editedConfig.interface.address?.map(validateCIDR);
   const dnsErrors = editedConfig.interface.dns?.map(validateIPAddress);
@@ -219,7 +220,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   // Save button enabled only if all required fields are valid
   const isFormValid =
     !privateKeyError &&
-    !endpointError &&
+    !hostError &&
     !portError &&
     addressErrors.every(e => !e) &&
     dnsErrors.every(e => !e) &&
@@ -433,11 +434,11 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               />
             </div>
             <EditableField
-              label="Endpoint"
-              value={editedConfig.interface.endpoint || ''}
-              onChange={(value) => updateInterface({endpoint: value || undefined})}
+              label="Host"
+              value={editedConfig.interface.host || ''}
+              onChange={(value) => updateInterface({host: value || undefined})}
               placeholder="e.g., vpn.example.com:51820"
-              errorMessage={endpointError}
+              errorMessage={hostError}
             />
             <EditableField
               label="Listen Port"

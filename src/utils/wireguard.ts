@@ -3,6 +3,7 @@ import {x25519} from '@noble/curves/ed25519';
 import {InterfaceConfig, PeerConfig, WireGuardConfig} from "../types/WireGuardConfig";
 import {Settings} from "../types/Settings";
 import {v4 as uuidv4} from "uuid";
+import {concatHostPort} from "./common";
 
 export function base64ToUint8Array(base64: string): Uint8Array {
   const binary = atob(base64);
@@ -69,8 +70,8 @@ export function parseWireGuardConfig(content: string, configName: string): WireG
       const key = line.slice(1, i).trim();
       const value = line.slice(i + 1).trim();
       switch (key.toLowerCase()) {
-        case 'endpoint':
-          interfaceConfig.endpoint = value;
+        case 'host':
+          interfaceConfig.host = value;
           break;
       }
     }
@@ -182,8 +183,8 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   let content = '[Interface]\n';
   content += `PrivateKey = ${config.interface.privateKey}\n`;
   content += `# PublicKey = ${getPublicKey(config.interface.privateKey)}\n`;
-  if (config.interface.endpoint) {
-    content += `# Endpoint = ${config.interface.endpoint}\n`;
+  if (config.interface.host) {
+    content += `# Host = ${config.interface.host}\n`;
   }
   if (config.interface.address && config.interface.address.length > 0) {
     content += `Address = ${config.interface.address.join(', ')}\n`;
@@ -252,7 +253,7 @@ export function peerFromConfig(config: WireGuardConfig, settings: Settings): Pee
   return {
     publicKey: getPublicKey(config.interface.privateKey),
     allowedIPs: mappedAllowedIPs,
-    endpoint: config.interface.endpoint,
+    endpoint: concatHostPort(config.interface.host, config.interface.listenPort),
     presharedKey: '',
     persistentKeepalive: settings.persistentKeepalive,
     configId: config.id

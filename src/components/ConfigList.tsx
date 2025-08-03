@@ -23,7 +23,7 @@ const ConfigList: React.FC<ConfigListProps> = ({configs, onSelect, onDelete, onA
       config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       config.interface.address.some(addr => addr.toLowerCase().includes(searchTerm.toLowerCase())) ||
       config.interface.privateKey.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      config.interface.endpoint?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      config.interface.host?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       getPublicKey(config.interface.privateKey).toLowerCase().includes(searchTerm.toLowerCase())
     );
 

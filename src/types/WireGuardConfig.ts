@@ -13,7 +13,7 @@ export interface PeerConfig {
 export interface InterfaceConfig {
   privateKey: string;
   listenPort?: number;
-  endpoint?: string;
+  host?: string;
   address: string[];
   dns: string[];
   postUp?: string;

@@ -7,7 +7,7 @@ import {
   validateMTU,
   validatePersistentKeepalive,
   validatePort
-} from '../utils/validation';
+} from '../utils/common';
 
 interface SettingsProps {
   onBack: () => void;
