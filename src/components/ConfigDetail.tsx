@@ -696,6 +696,15 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               placeholder="Configuration will be generated here..."
             />
           </div>
+          <div>
+            <p className="text-sm text-gray-700 mb-2">Systemd Service Commands</p>
+            <textarea
+              value={`systemctl stop wg-quick@wiregen.service\n cat <<'EOF' >/etc/wireguard/wiregen.conf\n${generateWireGuardConfig(settings, editedConfig, configContext.configs)}\nEOF\nsystemctl start wg-quick@wiregen.service\nsystemctl enable wg-quick@wiregen.service`}
+              readOnly
+              className="w-full h-64 font-mono text-sm bg-gray-50 border border-gray-300 rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Configuration will be generated here..."
+            />
+          </div>
 
           {/* QR Code */}
           <div className="border-t border-gray-200 pt-6">
