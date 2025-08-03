@@ -462,7 +462,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                     className="text-indigo-600 hover:text-indigo-700 text-sm"
                     onClick={() => {
                       // Generate next IPv4 address
-                      const subnet = settings.IPv4CIDR || settings.IPv4CIDR || '10.0.0.0/24';
+                      const subnet = settings.IPv4CIDR || '10.0.0.0/24';
                       const [base, mask] = subnet.split('/');
                       const baseParts = base.split('.').map(Number);
                       // Collect all used IPv4 addresses from all configs
@@ -490,7 +490,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                     className="text-indigo-600 hover:text-indigo-700 text-sm"
                     onClick={() => {
                       // Generate next IPv6 address
-                      const subnet = settings.IPv6CIDR || settings.IPv6CIDR || 'fd00::/64';
+                      const subnet = settings.IPv6CIDR || 'fd00::/64';
                       const [base, mask] = subnet.split('/');
                       // Collect all used IPv6 addresses from all configs
                       const allConfigs = Object.values(configContext.configs);
@@ -620,6 +620,17 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                     onChange={allowedIPs => updatePeerAllowedIPs(i, allowedIPs)}
                     placeholder="e.g., 10.0.0.2/32"
                     errorMessages={peerAllowedIpErrors}
+                    buttons={[
+                      <button
+                        type="button"
+                        className="text-indigo-600 hover:text-indigo-700 text-sm"
+                        onClick={() => {
+                          updatePeerAllowedIPs(i, ["0.0.0.0/0", "::/0"]);
+                        }}
+                      >
+                        Route All Traffic
+                      </button>
+                    ]}
                   />
                   <EditableField
                     label="Endpoint"
