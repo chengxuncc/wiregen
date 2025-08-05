@@ -105,7 +105,9 @@ const Layout: React.FC<LayoutProps> = ({ children, onSettings, onBackup, onResto
       </main>
       <footer className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-          WireGen &copy; {new Date().getFullYear()}
+          <a href="https://github.com/chengxuncc/wiregen" target="_blank" rel="noopener noreferrer" className="hover:underline">
+            WireGen &copy; {new Date().getFullYear()}
+          </a>
         </div>
       </footer>
     </div>

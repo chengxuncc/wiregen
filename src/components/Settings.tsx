@@ -256,7 +256,7 @@ const SettingsComponent: React.FC<SettingsProps> = ({onBack}) => {
                   value={formData.persistentKeepalive || ''}
                   onChange={(e) => handleInputChange('persistentKeepalive', e.target.value)}
                   className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none"
-                  placeholder="25 (default)"
+                  placeholder="15"
                 />
                 <button
                   type="button"
