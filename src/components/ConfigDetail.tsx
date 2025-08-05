@@ -437,7 +437,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               label="Host"
               value={editedConfig.interface.host || ''}
               onChange={(value) => updateInterface({host: value || undefined})}
-              placeholder="e.g., vpn.example.com:51820"
+              placeholder="e.g., vpn.example.com, 1.2.3.4, 2001:db8::1"
               errorMessage={hostError}
             />
             <EditableField
