@@ -99,7 +99,7 @@ export const useConfigActions = (navigateToView: (view: View, configId?: string)
   // Handle exporting a config
   const handleExportConfig = (config: WireGuardConfig) => {
     // Create WireGuard config file content
-    const content = generateWireGuardConfig(settings, config);
+    const content = generateWireGuardConfig(settings, config, configs);
 
     // Create a blob and download it
     const blob = new Blob([content], {type: 'text/plain'});

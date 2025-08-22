@@ -177,7 +177,7 @@ export function parseWireGuardConfig(content: string, configName: string): WireG
   };
 }
 
-export function generateWireGuardConfig(settings: Settings, config: WireGuardConfig, allConfigs?: {
+export function generateWireGuardConfig(settings: Settings, config: WireGuardConfig, allConfigs: {
   [id: string]: WireGuardConfig
 }): string {
   let content = '[Interface]\n';
@@ -236,7 +236,7 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   }
 
   let peers: PeerConfig[] = config.peers;
-  if (config.enableAllPeers && allConfigs) {
+  if (config.enableAllPeers) {
     peers = peers.concat(Object.values(allConfigs)
       .filter(c => c.id !== config.id && c.interface.privateKey !== config.interface.privateKey)
       .filter(c => {
@@ -248,7 +248,12 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
 
   peers.forEach(peer => {
     content += '\n[Peer]\n';
-    content += `PublicKey = ${peer.publicKey}\n`;
+    if (peer.configId) {
+      const peerConfig = allConfigs[peer.configId];
+      content += `PublicKey = ${getPublicKey(peerConfig.interface.privateKey)}\n`;
+    } else {
+      content += `PublicKey = ${peer.publicKey}\n`;
+    }
     if (peer.allowedIPs && peer.allowedIPs.length > 0) {
       content += `AllowedIPs = ${peer.allowedIPs.join(', ')}\n`;
     }
@@ -267,7 +272,7 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   return content;
 }
 
-export function generateSystemdCmd(settings: Settings, config: WireGuardConfig, allConfigs?: {
+export function generateSystemdCmd(settings: Settings, config: WireGuardConfig, allConfigs: {
   [id: string]: WireGuardConfig
 }): string {
   const confName = "wiregen";
