@@ -229,7 +229,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const overrideErrors: { [k: string]: string } = {};
   if (amneziaEnabled) {
     const hexRegex = /^[0-9a-fA-F]*$/;
-    (['I1','I2','I3','I4','I5'] as const).forEach(k => {
+    (['I1', 'I2', 'I3', 'I4', 'I5'] as const).forEach(k => {
       const v = (override as any)[k];
       if (v && !hexRegex.test(v)) overrideErrors[k] = 'Hex only';
     });
@@ -600,35 +600,42 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
             <div className="flex items-center justify-between">
               <h4 className="text-md font-medium text-gray-900 mb-4">AmneziaWG</h4>
               {editedConfig.amneziaWG && Object.values(editedConfig.amneziaWG).some(v => v !== undefined && v !== '') && (
-                  <button
-                    type="button"
-                    onClick={() => setEditedConfig(prev => ({...prev, amneziaWG: {}}))}
-                    className="text-sm text-red-600 hover:underline"
-                  >Clear</button>
+                <button
+                  type="button"
+                  onClick={() => setEditedConfig(prev => ({...prev, amneziaWG: {}}))}
+                  className="text-sm text-red-600 hover:underline"
+                >Clear</button>
               )}
             </div>
-            <p className="text-xs text-gray-500 mb-3">Override global I1-I5/Jc/Jmin/Jmax for this config. Leave blank to use global settings. Only J* may differ between client/server; ensure I* match on both.</p>
+            <p className="text-xs text-gray-500 mb-3">Override global I1-I5/Jc/Jmin/Jmax for this config. Leave blank to
+              use global settings. Only J* may differ between client/server; ensure I* match on both.</p>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              {(['Jc','Jmin','Jmax'] as const).map(k => (
+              {(['Jc', 'Jmin', 'Jmax'] as const).map(k => (
                 <div key={k}>
                   <div className="text-xs text-gray-500 mb-1">{k}</div>
                   <input
                     type="number"
                     value={(override as any)[k] !== undefined ? (override as any)[k] : ''}
-                    onChange={e => setEditedConfig(prev => ({...prev, amneziaWG: {...prev.amneziaWG, [k]: e.target.value === '' ? undefined : parseInt(e.target.value)}}))}
+                    onChange={e => setEditedConfig(prev => ({
+                      ...prev,
+                      amneziaWG: {...prev.amneziaWG, [k]: e.target.value === '' ? undefined : parseInt(e.target.value)}
+                    }))}
                     placeholder={(settings.amneziaWG as any)?.[k] || 'inherit'}
                     className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 ${(overrideErrors[k] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500')}`}
                   />
                   {overrideErrors[k] && <div className="text-[10px] text-red-600 mt-0.5">{overrideErrors[k]}</div>}
                 </div>
               ))}
-              {(['I1','I2','I3','I4','I5'] as const).map(k => (
+              {(['I1', 'I2', 'I3', 'I4', 'I5'] as const).map(k => (
                 <div key={k}>
                   <div className="text-xs text-gray-500 mb-1">{k} (hex)</div>
                   <input
                     type="text"
                     value={(override as any)[k] || ''}
-                    onChange={e => setEditedConfig(prev => ({...prev, amneziaWG: {...prev.amneziaWG, [k]: e.target.value || undefined}}))}
+                    onChange={e => setEditedConfig(prev => ({
+                      ...prev,
+                      amneziaWG: {...prev.amneziaWG, [k]: e.target.value || undefined}
+                    }))}
                     placeholder={(settings.amneziaWG as any)?.[k] || 'inherit'}
                     className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 ${(overrideErrors[k] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500')}`}
                   />
@@ -677,9 +684,12 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
               >
                 <option value="">Add Peer From Other</option>
                 {
-                  Object.values(configContext.configs).filter(c => c.id !== editedConfig.id).map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))
+                  Object.values(configContext.configs)
+                    .filter(c => c.id !== editedConfig.id)
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))
                 }
               </select>
             </div>
