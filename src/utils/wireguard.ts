@@ -282,7 +282,7 @@ systemctl start ${service}@${confName}.service
 systemctl enable ${service}@${confName}.service`;
 }
 
-export function peerFromConfig(config: WireGuardConfig, settings: Settings): PeerConfig {
+export function peerFromConfig(config: WireGuardConfig, settings: Settings, adding?: boolean): PeerConfig {
   // Map allowedIPs to /32 for IPv4 and /128 for IPv6
   const mappedAllowedIPs = (config.interface.address || []).map(addr => {
     if (addr.includes('.')) {
@@ -299,7 +299,7 @@ export function peerFromConfig(config: WireGuardConfig, settings: Settings): Pee
     allowedIPs: mappedAllowedIPs,
     endpoint: concatHostPort(config.interface.host, config.interface.listenPort),
     presharedKey: '',
-    persistentKeepalive: undefined,
-    configId: config.id
+    persistentKeepalive: adding ? settings.persistentKeepalive : undefined,
+    configId: config.id,
   };
 }

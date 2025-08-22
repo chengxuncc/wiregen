@@ -342,7 +342,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     if (!peerConfig) return;
     setEditedConfig(prev => ({
       ...prev,
-      peers: [...prev.peers, peerFromConfig(peerConfig, settings)]
+      peers: [...prev.peers, peerFromConfig(peerConfig, settings, true)]
     }));
   };
 
