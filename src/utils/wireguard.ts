@@ -175,7 +175,7 @@ export function parseWireGuardConfig(content: string, configName: string): WireG
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-};
+}
 
 export function generateWireGuardConfig(settings: Settings, config: WireGuardConfig, allConfigs?: {
   [id: string]: WireGuardConfig
@@ -204,6 +204,35 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   }
   if (config.interface.postDown) {
     content += `PostDown = ${config.interface.postDown.replace(/\r?\n/g, '; ')}\n`;
+  }
+
+  if (settings.amneziaWG?.enabled) {
+    const amz = settings.amneziaWG;
+    const overrides = config.amneziaWG || {};
+    content += `# AmneziaWG Parameters\n`;
+    const keys = ['H1', 'H2', 'H3', 'H4', 'S1', 'S2', 'Jc', 'Jmin', 'Jmax', 'I1', 'I2', 'I3', 'I4', 'I5'] as const;
+    keys.forEach(k => {
+      // For override-eligible keys use override value if provided
+      let v: any;
+      if (['Jc', 'Jmin', 'Jmax', 'I1', 'I2', 'I3', 'I4', 'I5'].includes(k)) {
+        v = (overrides as any)[k] !== undefined ? (overrides as any)[k] : (amz as any)[k];
+      } else {
+        v = (amz as any)[k];
+      }
+      if (v !== undefined && v !== '') {
+        if (k.startsWith('I')) {
+          // Ensure signature style formatting stays consistent (<b hex>) if user omitted wrappers
+          if (!/^<b\s.+>$/.test(v)) {
+            if (!v.includes('0x')) {
+              v = `<b 0x${v}>`;
+            } else {
+              v = `<b ${v}>`;
+            }
+          }
+        }
+        content += `${k} = ${v}\n`;
+      }
+    });
   }
 
   let peers: PeerConfig[] = config.peers;
@@ -236,6 +265,21 @@ export function generateWireGuardConfig(settings: Settings, config: WireGuardCon
   });
 
   return content;
+}
+
+export function generateSystemdCmd(settings: Settings, config: WireGuardConfig, allConfigs?: {
+  [id: string]: WireGuardConfig
+}): string {
+  const confName = "wiregen";
+  const service = settings.amneziaWG?.enabled ? "awg-quick" : "wg-quick";
+  const confPath = settings.amneziaWG?.enabled ? "/etc/amnezia/amneziawg" : "/etc/wireguard";
+
+  return `systemctl stop ${service}@${confName}.service
+cat <<'EOF' > ${confPath}/${confName}.conf
+${generateWireGuardConfig(settings, config, allConfigs)}
+EOF
+systemctl start ${service}@${confName}.service
+systemctl enable ${service}@${confName}.service`;
 }
 
 export function peerFromConfig(config: WireGuardConfig, settings: Settings): PeerConfig {

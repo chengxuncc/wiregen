@@ -20,6 +20,17 @@ export interface InterfaceConfig {
   postDown?: string;
 }
 
+export interface AmneziaWGConfig {
+  Jc?: number;
+  Jmin?: number;
+  Jmax?: number;
+  I1?: string;
+  I2?: string;
+  I3?: string;
+  I4?: string;
+  I5?: string;
+}
+
 export interface WireGuardConfig {
   id: string;
   name: string;
@@ -28,4 +39,5 @@ export interface WireGuardConfig {
   enableAllPeers?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  amneziaWG?: AmneziaWGConfig; // Per-config override for subset of AmneziaWG params
 }

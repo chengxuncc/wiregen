@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {useConfig} from '../contexts/ConfigContext';
-import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
+import {DEFAULT_SETTINGS, Settings, AmneziaWGSettings} from '../types/Settings';
 import {
   validateIPv4CIDR,
   validateIPv6CIDR,
@@ -15,11 +15,57 @@ interface SettingsProps {
 
 const SettingsComponent: React.FC<SettingsProps> = ({onBack}) => {
   const {settings, updateSettings} = useConfig();
-  const [formData, setFormData] = useState<Settings>(settings);
+  const [formData, setFormData] = useState<Settings>({...DEFAULT_SETTINGS, ...settings});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  const validateAmnezia = (amz?: AmneziaWGSettings) => {
+    if (!amz || !amz.enabled) return undefined;
+    const hVals = [amz.H1, amz.H2, amz.H3, amz.H4].filter(v => v !== undefined) as number[];
+    // H uniqueness
+    const errors: { [key: string]: string } = {};
+    const set = new Set(hVals);
+    if (hVals.length !== set.size) {
+      errors['amneziaWG.Hx'] = 'H1-H4 must be unique';
+    }
+    const checkH = (key: keyof AmneziaWGSettings) => {
+      const v = amz[key];
+      if (v === undefined) return;
+      if (v < 0 || v > 2147483647) errors[`amneziaWG.${key}`] = 'Value must be 0-2147483647';
+    };
+    ['H1','H2','H3','H4'].forEach(k=>checkH(k as keyof AmneziaWGSettings));
+    if (amz.S1 !== undefined) {
+      if (amz.S1 > 1132) errors['amneziaWG.S1'] = 'S1 must be ≤ 1132';
+      if (amz.S1 <= 0) errors['amneziaWG.S1'] = 'S1 must be positive';
+    }
+    if (amz.S2 !== undefined) {
+      if (amz.S2 > 1188) errors['amneziaWG.S2'] = 'S2 must be ≤ 1188';
+      if (amz.S2 <= 0) errors['amneziaWG.S2'] = 'S2 must be positive';
+    }
+    if (amz.S1 !== undefined && amz.S2 !== undefined && (amz.S1 + 56 === amz.S2)) {
+      errors['amneziaWG.S1S2'] = 'S1 + 56 must not equal S2';
+    }
+    const hexRegex = /^[0-9a-fA-F]*$/;
+    ['I1','I2','I3','I4','I5'].forEach(k => {
+      const v = (amz as any)[k];
+      if (v && !hexRegex.test(v)) errors[`amneziaWG.${k}`] = 'Hex only';
+    });
+    if (amz.Jc !== undefined) {
+      if (amz.Jc < 0 || amz.Jc > 128) errors['amneziaWG.Jc'] = 'Jc 0-128';
+    }
+    if (amz.Jmin !== undefined) {
+      if (amz.Jmin >= 1280) errors['amneziaWG.Jmin'] = 'Jmin < 1280';
+    }
+    if (amz.Jmax !== undefined) {
+      if (amz.Jmax > 1280) errors['amneziaWG.Jmax'] = 'Jmax ≤ 1280';
+    }
+    if (amz.Jmin !== undefined && amz.Jmax !== undefined) {
+      if (!(amz.Jmax > amz.Jmin)) errors['amneziaWG.JminJmax'] = 'Jmax must be > Jmin';
+    }
+    return errors;
+  };
+
   const validateForm = (): boolean => {
-    const newErrors: { [key: string]: string } = {};
+    let newErrors: { [key: string]: string } = {};
 
     if (formData.mtu !== undefined) {
       const mtuError = validateMTU(formData.mtu);
@@ -55,6 +101,11 @@ const SettingsComponent: React.FC<SettingsProps> = ({onBack}) => {
         newErrors.IPv6CIDR = ipv6Error;
       }
     }
+
+    newErrors = {
+      ...newErrors,
+      ...validateAmnezia(formData.amneziaWG)
+    };
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -94,6 +145,36 @@ const SettingsComponent: React.FC<SettingsProps> = ({onBack}) => {
   const handleUseAllDefaults = () => {
     setFormData({...DEFAULT_SETTINGS});
     setErrors({});
+  };
+
+  const handleAmzNumberChange = (field: keyof AmneziaWGSettings, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      amneziaWG: {
+        ...prev.amneziaWG,
+        [field]: value === '' ? undefined : parseInt(value,10)
+      }
+    }));
+  };
+
+  const handleAmzStringChange = (field: keyof AmneziaWGSettings, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      amneziaWG: {
+        ...prev.amneziaWG,
+        [field]: value === '' ? undefined : value
+      }
+    }));
+  };
+
+  const toggleAmnezia = () => {
+    setFormData(prev => ({
+      ...prev,
+      amneziaWG: {
+        ...(prev.amneziaWG || DEFAULT_SETTINGS.amneziaWG),
+        enabled: !(prev.amneziaWG && prev.amneziaWG.enabled)
+      }
+    }));
   };
 
   return (
@@ -276,6 +357,62 @@ const SettingsComponent: React.FC<SettingsProps> = ({onBack}) => {
               <p className="mt-2 text-sm text-gray-500">
                 Default keepalive interval for new peer configurations. Set to 0 to disable.
               </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <h4 className="text-md font-medium text-gray-900">AmneziaWG</h4>
+                <button type="button" onClick={toggleAmnezia} className="text-sm text-indigo-600 hover:underline">
+                  {formData.amneziaWG?.enabled ? 'Disable' : 'Enable'}
+                </button>
+              </div>
+              <p className="mt-1 text-sm text-gray-500">Protocol imitation parameters. All parameters must match between client and server except Jc, Jmin, Jmax (may vary).</p>
+              {formData.amneziaWG?.enabled && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {['H1','H2','H3','H4'].map(h => (
+                    <div key={h}>
+                      <label className="block text-sm font-medium text-gray-700">{h}</label>
+                      <input type="number" className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none" value={(formData.amneziaWG as any)[h] || ''} onChange={e=>handleAmzNumberChange(h as any, e.target.value)} placeholder="e.g. 5" />
+                      {errors[`amneziaWG.${h}`] && <p className="mt-1 text-xs text-red-600">{errors[`amneziaWG.${h}`]}</p>}
+                    </div>
+                  ))}
+                  {errors['amneziaWG.Hx'] && <p className="col-span-full text-xs text-red-600">{errors['amneziaWG.Hx']}</p>}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">S1</label>
+                    <input type="number" className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none" value={formData.amneziaWG?.S1 || ''} onChange={e=>handleAmzNumberChange('S1', e.target.value)} placeholder="≤1132" />
+                    {errors['amneziaWG.S1'] && <p className="mt-1 text-xs text-red-600">{errors['amneziaWG.S1']}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">S2</label>
+                    <input type="number" className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none" value={formData.amneziaWG?.S2 || ''} onChange={e=>handleAmzNumberChange('S2', e.target.value)} placeholder="≤1188" />
+                    {errors['amneziaWG.S2'] && <p className="mt-1 text-xs text-red-600">{errors['amneziaWG.S2']}</p>}
+                  </div>
+                  {errors['amneziaWG.S1S2'] && <p className="col-span-full text-xs text-red-600">{errors['amneziaWG.S1S2']}</p>}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Jc</label>
+                    <input type="number" className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none" value={formData.amneziaWG?.Jc || ''} onChange={e=>handleAmzNumberChange('Jc', e.target.value)} placeholder="4-12" />
+                    {errors['amneziaWG.Jc'] && <p className="mt-1 text-xs text-red-600">{errors['amneziaWG.Jc']}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Jmin</label>
+                    <input type="number" className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none" value={formData.amneziaWG?.Jmin || ''} onChange={e=>handleAmzNumberChange('Jmin', e.target.value)} placeholder="8" />
+                    {errors['amneziaWG.Jmin'] && <p className="mt-1 text-xs text-red-600">{errors['amneziaWG.Jmin']}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Jmax</label>
+                    <input type="number" className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none" value={formData.amneziaWG?.Jmax || ''} onChange={e=>handleAmzNumberChange('Jmax', e.target.value)} placeholder="80" />
+                    {errors['amneziaWG.Jmax'] && <p className="mt-1 text-xs text-red-600">{errors['amneziaWG.Jmax']}</p>}
+                  </div>
+                  {(errors['amneziaWG.JminJmax']) && <p className="col-span-full text-xs text-red-600">{errors['amneziaWG.JminJmax']}</p>}
+                  {['I1','I2','I3','I4','I5'].map(i => (
+                    <div key={i}>
+                      <label className="block text-sm font-medium text-gray-700">{i} (hex)</label>
+                      <input type="text" className="shadow-sm border-b focus:outline-none focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md rounded-r-none" value={(formData.amneziaWG as any)[i] || ''} onChange={e=>handleAmzStringChange(i as any, e.target.value)} placeholder="optional" />
+                      {errors[`amneziaWG.${i}`] && <p className="mt-1 text-xs text-red-600">{errors[`amneziaWG.${i}`]}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

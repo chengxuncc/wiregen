@@ -4,7 +4,13 @@ import {DEFAULT_SETTINGS, Settings} from '../types/Settings';
 import {v4 as uuidv4} from 'uuid';
 import QRCode from 'qrcode';
 import {useConfig} from '../contexts/ConfigContext';
-import {generatePrivateKey, generateWireGuardConfig, getPublicKey, peerFromConfig} from '../utils/wireguard';
+import {
+  generatePrivateKey,
+  generateSystemdCmd,
+  generateWireGuardConfig,
+  getPublicKey,
+  peerFromConfig
+} from '../utils/wireguard';
 import {
   validateCIDR,
   validateEndpoint,
@@ -194,7 +200,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
         setQrCodeUrl(qrUrl);
       } catch (error) {
         console.error('Error generating QR code:', error);
-        setQrCodeUrl('');
+        setQrCodeUrl("error");
       }
     };
 
@@ -217,6 +223,30 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
   const addressErrors = editedConfig.interface.address?.map(validateCIDR);
   const dnsErrors = editedConfig.interface.dns?.map(validateIPAddress);
 
+  // AmneziaWG override validation (only if global AmneziaWG enabled)
+  const amneziaEnabled = settings.amneziaWG?.enabled;
+  const override = editedConfig.amneziaWG || {};
+  const overrideErrors: { [k: string]: string } = {};
+  if (amneziaEnabled) {
+    const hexRegex = /^[0-9a-fA-F]*$/;
+    (['I1','I2','I3','I4','I5'] as const).forEach(k => {
+      const v = (override as any)[k];
+      if (v && !hexRegex.test(v)) overrideErrors[k] = 'Hex only';
+    });
+    if (override.Jc !== undefined) {
+      if (override.Jc < 1 || override.Jc > 128) overrideErrors.Jc = '1-128';
+    }
+    if (override.Jmin !== undefined) {
+      if (override.Jmin >= 1280) overrideErrors.Jmin = '<1280';
+    }
+    if (override.Jmax !== undefined) {
+      if (override.Jmax > 1280) overrideErrors.Jmax = '≤1280';
+    }
+    if (override.Jmin !== undefined && override.Jmax !== undefined) {
+      if (!(override.Jmax > override.Jmin)) overrideErrors.Jmax = 'Jmax > Jmin';
+    }
+  }
+
   // Save button enabled only if all required fields are valid
   const isFormValid =
     !privateKeyError &&
@@ -224,6 +254,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
     !portError &&
     addressErrors.every(e => !e) &&
     dnsErrors.every(e => !e) &&
+    Object.keys(overrideErrors).length === 0 &&
     editedConfig.peers.every(peer =>
       !validatePublicKey(peer.publicKey) &&
       (peer.allowedIPs || []).every(ip => !validateCIDR(ip)) &&
@@ -564,6 +595,49 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
             />
           </div>
         </div>
+        {amneziaEnabled && (
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h4 className="text-md font-medium text-gray-900 mb-4">AmneziaWG</h4>
+              {editedConfig.amneziaWG && Object.values(editedConfig.amneziaWG).some(v => v !== undefined && v !== '') && (
+                  <button
+                    type="button"
+                    onClick={() => setEditedConfig(prev => ({...prev, amneziaWG: {}}))}
+                    className="text-sm text-red-600 hover:underline"
+                  >Clear</button>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mb-3">Override global I1-I5/Jc/Jmin/Jmax for this config. Leave blank to use global settings. Only J* may differ between client/server; ensure I* match on both.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              {(['Jc','Jmin','Jmax'] as const).map(k => (
+                <div key={k}>
+                  <div className="text-xs text-gray-500 mb-1">{k}</div>
+                  <input
+                    type="number"
+                    value={(override as any)[k] !== undefined ? (override as any)[k] : ''}
+                    onChange={e => setEditedConfig(prev => ({...prev, amneziaWG: {...prev.amneziaWG, [k]: e.target.value === '' ? undefined : parseInt(e.target.value)}}))}
+                    placeholder={(settings.amneziaWG as any)?.[k] || 'inherit'}
+                    className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 ${(overrideErrors[k] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500')}`}
+                  />
+                  {overrideErrors[k] && <div className="text-[10px] text-red-600 mt-0.5">{overrideErrors[k]}</div>}
+                </div>
+              ))}
+              {(['I1','I2','I3','I4','I5'] as const).map(k => (
+                <div key={k}>
+                  <div className="text-xs text-gray-500 mb-1">{k} (hex)</div>
+                  <input
+                    type="text"
+                    value={(override as any)[k] || ''}
+                    onChange={e => setEditedConfig(prev => ({...prev, amneziaWG: {...prev.amneziaWG, [k]: e.target.value || undefined}}))}
+                    placeholder={(settings.amneziaWG as any)?.[k] || 'inherit'}
+                    className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 ${(overrideErrors[k] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500')}`}
+                  />
+                  {overrideErrors[k] && <div className="text-[10px] text-red-600 mt-0.5">{overrideErrors[k]}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Peers Section */}
         <div className="px-6 py-4">
@@ -699,7 +773,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
           <div>
             <p className="text-sm text-gray-700 mb-2">Systemd Service Commands</p>
             <textarea
-              value={`systemctl stop wg-quick@wiregen.service\n cat <<'EOF' >/etc/wireguard/wiregen.conf\n${generateWireGuardConfig(settings, editedConfig, configContext.configs)}\nEOF\nsystemctl start wg-quick@wiregen.service\nsystemctl enable wg-quick@wiregen.service`}
+              value={generateSystemdCmd(settings, editedConfig, configContext.configs)}
               readOnly
               className="w-full h-64 font-mono text-sm bg-gray-50 border border-gray-300 rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Configuration will be generated here..."
@@ -707,28 +781,31 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
           </div>
 
           {/* QR Code */}
-          <div className="border-t border-gray-200 pt-6">
-            <div className="flex flex-col items-center space-y-3">
-              <h5 className="text-sm font-medium text-gray-700">QR Code</h5>
-              {qrCodeUrl ? (
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                  <img
-                    src={qrCodeUrl}
-                    alt="WireGuard Configuration QR Code"
-                    className="w-64 h-64 object-contain"
-                  />
-                </div>
-              ) : (
-                <div
-                  className="w-64 h-64 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">Generating QR Code...</span>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 text-center max-w-48">
-                Scan with your WireGuard mobile app to import this configuration
-              </p>
-            </div>
-          </div>
+          {
+            qrCodeUrl !== "error" &&
+              <div className="border-t border-gray-200 pt-6">
+                  <div className="flex flex-col items-center space-y-3">
+                      <h5 className="text-sm font-medium text-gray-700">QR Code</h5>
+                    {qrCodeUrl ? (
+                      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <img
+                          src={qrCodeUrl}
+                          alt="WireGuard Configuration QR Code"
+                          className="w-64 h-64 object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-64 h-64 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">Generating QR Code...</span>
+                      </div>
+                    )}
+                      <p className="text-xs text-gray-500 text-center max-w-48">
+                          Scan with your WireGuard mobile app to import this configuration
+                      </p>
+                  </div>
+              </div>
+          }
         </div>
       </div>
     </div>

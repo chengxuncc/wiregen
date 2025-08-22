@@ -137,8 +137,20 @@ const ImportBackup: React.FC<ImportBackupProps> = ({onImport, onCancel}) => {
                     <div>IPv6 CIDR: {preview.settings.IPv6CIDR || 'Not set'}</div>
                     <div>Listen Port: {preview.settings.listenPort || 'Not set'}</div>
                     <div>MTU: {preview.settings.mtu || 'Not set'}</div>
-                    <div>Persistent
-                      Keepalive: {preview.settings.persistentKeepalive !== undefined ? `${preview.settings.persistentKeepalive} seconds` : 'Not set'}</div>
+                    <div>Persistent Keepalive: {preview.settings.persistentKeepalive !== undefined ? `${preview.settings.persistentKeepalive} seconds` : 'Not set'}</div>
+                    {preview.settings.amneziaWG && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <div>AmneziaWG: {preview.settings.amneziaWG.enabled ? 'Enabled' : 'Disabled'}</div>
+                        {preview.settings.amneziaWG.enabled && (
+                          <div className="ml-2 space-y-1">
+                            {['H1','H2','H3','H4','S1','S2','I1','I2','I3','I4','I5','Jc','Jmin','Jmax'].map(k => (
+                              (preview.settings.amneziaWG as any)[k] !== undefined &&
+                              <div key={k}>{k}: {(preview.settings.amneziaWG as any)[k] || 'Not set'}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
