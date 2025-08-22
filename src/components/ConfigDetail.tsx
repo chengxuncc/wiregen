@@ -716,7 +716,7 @@ const ConfigDetail: React.FC<ConfigDetailProps> = ({config, settings, onSave, on
                   </div>
                   <EditableField
                     label="Public Key"
-                    value={peer.publicKey}
+                    value={peer.configId ? getPublicKey(configContext.configs[peer.configId].interface.privateKey) : peer.publicKey}
                     onChange={val => updatePeer(i, {publicKey: val})}
                     errorMessage={peerPublicKeyError}
                     className={peer.configId ? 'border border-gray-300 bg-gray-100 focus:ring-gray-500 focus:border-gray-500' : ''}
