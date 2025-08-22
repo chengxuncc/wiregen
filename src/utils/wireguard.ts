@@ -299,7 +299,7 @@ export function peerFromConfig(config: WireGuardConfig, settings: Settings): Pee
     allowedIPs: mappedAllowedIPs,
     endpoint: concatHostPort(config.interface.host, config.interface.listenPort),
     presharedKey: '',
-    persistentKeepalive: settings.persistentKeepalive,
+    persistentKeepalive: undefined,
     configId: config.id
   };
 }
